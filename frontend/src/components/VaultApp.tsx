@@ -1353,18 +1353,24 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
           {!shareLink ? (
             <form onSubmit={handleShare}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                {/* Permissions */}
                 <div className="field-group">
                   <label style={{ fontSize: '0.875rem', fontWeight: 700, color: '#475569', marginBottom: '8px', display: 'block' }}>Permissions</label>
-                  <select name="access-level" defaultValue="both" style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '0.9375rem' }}>
-                    <option value="both">View and Download</option>
-                    <option value="view">View Only</option>
-                    <option value="download">Download Only</option>
+                  <select name="access-level" defaultValue="both" style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '0.9375rem', background: 'white' }}>
+                    <option value="both">👁 View and Download</option>
+                    <option value="view">👁 View Only (no download)</option>
+                    <option value="download">⬇ Download Only</option>
                   </select>
                 </div>
 
+                {/* Expiration */}
                 <div className="field-group">
-                  <label style={{ fontSize: '0.875rem', fontWeight: 700, color: '#475569', marginBottom: '8px', display: 'block' }}>Expiration</label>
-                  <select name="expires" defaultValue="60" style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '0.9375rem' }}>
+                  <label style={{ fontSize: '0.875rem', fontWeight: 700, color: '#475569', marginBottom: '8px', display: 'block' }}>
+                    Link Expiry
+                    <span style={{ fontSize: '0.75rem', fontWeight: 500, color: '#94a3b8', marginLeft: '8px' }}>Link stops working after this time</span>
+                  </label>
+                  <select name="expires" defaultValue="60" style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '0.9375rem', background: 'white' }}>
                     <option value="15">15 Minutes</option>
                     <option value="60">1 Hour</option>
                     <option value="1440">24 Hours</option>
@@ -1372,21 +1378,39 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                   </select>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', background: '#f1f5f9' }}>
-                  <input type="checkbox" name="one-time" id="one-time" defaultChecked style={{ width: '18px', height: '18px' }} />
-                  <label htmlFor="one-time" style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#475569', cursor: 'pointer' }}>One-time access only</label>
+                {/* One-time use */}
+                <div style={{ padding: '14px 16px', borderRadius: '12px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                    <input type="checkbox" name="one-time" id="one-time" style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0 }} />
+                    <div>
+                      <label htmlFor="one-time" style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#0f172a', cursor: 'pointer', display: 'block', marginBottom: '4px' }}>
+                        Single-use Link
+                      </label>
+                      <p style={{ margin: 0, fontSize: '0.8125rem', color: '#64748b', lineHeight: 1.5 }}>
+                        Link becomes invalid after the first download or view. Even if time has not expired.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
+                {/* Password protection */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                     <input 
                       type="checkbox" 
                       id="require-password" 
                       checked={requireSharePassword}
                       onChange={(e) => setRequireSharePassword(e.target.checked)}
-                      style={{ width: '18px', height: '18px', accentColor: '#f59e0b' }} 
+                      style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0, accentColor: '#f59e0b' }} 
                     />
-                    <label htmlFor="require-password" style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#b45309', cursor: 'pointer' }}>Require Custom Password</label>
+                    <div>
+                      <label htmlFor="require-password" style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#b45309', cursor: 'pointer', display: 'block', marginBottom: '4px' }}>
+                        Password Protect This Link
+                      </label>
+                      <p style={{ margin: 0, fontSize: '0.8125rem', color: '#92400e', lineHeight: 1.5 }}>
+                        Recipient must enter a password before the file can be accessed or decrypted.
+                      </p>
+                    </div>
                   </div>
                   
                   {requireSharePassword && (
@@ -1395,29 +1419,30 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                         type="text" 
                         value={sharePassword}
                         onChange={(e) => setSharePassword(e.target.value)}
-                        placeholder="Enter password for this link" 
+                        placeholder="Enter a password for this link" 
                         required
                         autoComplete="off"
-                        style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #fcd34d', fontSize: '0.875rem' }}
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #fcd34d', fontSize: '0.875rem', background: 'white', boxSizing: 'border-box' }}
                       />
                     </motion.div>
                   )}
                   
                   {!requireSharePassword && activeFolderPassword && (
-                    <p style={{ margin: 0, fontSize: '0.8125rem', color: '#b45309', lineHeight: 1.4 }}>
-                      ⚠️ <strong>Passwordless mode:</strong> Anyone with the link will be able to decrypt this file instantly. The decryption key will be embedded securely in the link.
+                    <p style={{ margin: 0, fontSize: '0.8125rem', color: '#92400e', lineHeight: 1.5 }}>
+                      ⚡ <strong>Passwordless mode:</strong> The decryption key is embedded in the link. Anyone with the link can open the file.
                     </p>
                   )}
                 </div>
 
-                <div style={{ padding: '12px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6', fontSize: '0.8125rem', lineHeight: 1.5 }}>
-                  <p style={{ margin: 0, display: 'flex', gap: '8px' }}>
-                    <ShieldCheck size={16} style={{ flexShrink: 0 }} />
-                    This generates a temporary, encrypted link. The file itself remains end-to-end encrypted in your vault.
+                {/* Info bar */}
+                <div style={{ padding: '12px 16px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.15)', color: '#2563eb', fontSize: '0.8125rem', lineHeight: 1.5 }}>
+                  <p style={{ margin: 0, display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                    <ShieldCheck size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                    Your file stays fully encrypted. Decryption only happens in the recipient's browser — never on the server.
                   </p>
                 </div>
 
-                <button type="submit" className="primary-btn" style={{ width: '100%', height: '52px' }}>Generate Secure Link</button>
+                <button type="submit" className="primary-btn" style={{ width: '100%', height: '52px', fontSize: '1rem' }}>Generate Secure Link</button>
               </div>
             </form>
           ) : (
