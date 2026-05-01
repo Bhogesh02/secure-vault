@@ -36,8 +36,10 @@ export const fileApi = {
   completeMultipart: (token: string, data: { uploadId: string; key: string; parts: { partNumber: number; etag: string }[]; filename: string; folderId: number; size: number; contentType: string; encryptionSalt?: string; encryptionIv?: string }) =>
     apiRequest<{ id: number }>("/file/upload/complete", { method: "POST", body: JSON.stringify(data) }, { token }),
 
-  createDownloadUrl: (token: string, fileId: number, folderPassword?: string) =>
-    apiRequest<{ download_url: string }>(`/file/download/${fileId}`, { method: "GET" }, { token, folderPassword }),
+  createDownloadUrl: (token: string, fileId: number, folderPassword?: string, shareToken?: string) => {
+    const url = shareToken ? `/file/download/${fileId}?token=${encodeURIComponent(shareToken)}` : `/file/download/${fileId}`;
+    return apiRequest<{ download_url: string }>(url, { method: "GET" }, { token, folderPassword });
+  },
 
   downloadBlob: async (downloadUrl: string) => {
     const response = await fetch(downloadUrl);
