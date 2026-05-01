@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+dist/
+.wrangler/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+.dev.vars
+typecheck_output.txt
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDE Files
+.vscode/
+.idea/
+*.swp
+*.log

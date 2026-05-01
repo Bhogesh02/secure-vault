@@ -1,0 +1,35 @@
+// Luxury Theme Variables (Core)
+$primary: #f59e0b; 
+$primary-dark: #d97706;
+$bg-deep: #050505;
+$bg-surface: #0a0a0c;
+$bg-card: rgba(18, 18, 20, 0.7);
+$text-main: #f8fafc;
+$text-muted: #94a3b8;
+$text-dim: #64748b;
+$border: rgba(255, 255, 255, 0.1);
+$glass: rgba(255, 255, 255, 0.03);
+$error: #ef4444;
+$success: #10b981;
+
+// Luxury Light Theme (Dashboard)
+$light-blue: #3b82f6;
+$light-blue-soft: #eff6ff;
+$text-dark: #0f172a;
+$text-light: #64748b;
+
+// Spacing
+$spacing-xs: 0.5rem;
+$spacing-sm: 1rem;
+$spacing-md: 1.5rem;
+$spacing-lg: 2rem;
+$spacing-xl: 4rem;
+
+// Transitions
+$transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-fast: all 0.2s ease;
+
+// Effects
+$glass-blur: blur(12px);
+$shadow-luxury: 0 20px 40px rgba(0, 0, 0, 0.4);
+$border-luxury: 1px solid $border;

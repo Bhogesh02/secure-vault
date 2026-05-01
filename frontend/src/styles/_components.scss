@@ -1,0 +1,262 @@
+@use "variables" as *;
+
+// Input Fields & Groups
+.field-group {
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: $text-dark;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    .icon {
+      position: absolute;
+      left: 18px;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    input {
+      width: 100%;
+      height: 56px;
+      background: #f8fafc;
+      border: 2px solid transparent;
+      border-radius: 16px;
+      padding: 0 45px 0 50px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: $text-dark;
+      transition: all 0.3s ease;
+
+      &:focus {
+        background: white;
+        border-color: $light-blue-soft;
+        box-shadow: 0 10px 20px rgba(59, 130, 246, 0.05);
+        outline: none;
+      }
+
+      &::placeholder { color: #94a3b8; }
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      background: transparent;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      z-index: 10;
+      
+      &:hover {
+        color: $light-blue;
+        background: rgba(59, 130, 246, 0.05);
+      }
+    }
+  }
+
+  &.has-error {
+    input { border-color: #fca5a5; background: #fffafb; }
+    .field-error-msg { font-size: 0.75rem; color: #ef4444; font-weight: 700; margin-top: 4px; }
+  }
+}
+
+// Buttons
+.primary-btn {
+  width: 100%;
+  height: 56px;
+  background: $light-blue;
+  color: white;
+  border-radius: 18px;
+  font-weight: 800;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+
+  &:hover:not(:disabled) {
+    background: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px rgba(59, 130, 246, 0.3);
+  }
+
+  &:active:not(:disabled) { transform: translateY(0); }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background: #94a3b8;
+    box-shadow: none;
+  }
+}
+
+.secondary-btn {
+  @extend .primary-btn;
+  background: #f1f5f9;
+  color: $text-dark;
+  box-shadow: none;
+  &:hover:not(:disabled) { background: #e2e8f0; transform: none; box-shadow: none; }
+}
+
+// Modals
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  background: white;
+  width: 100%;
+  max-width: 480px;
+  border-radius: 28px;
+  padding: 40px;
+  position: relative;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.25);
+  animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  .modal-close {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    color: #94a3b8;
+    background: none;
+    border: none;
+    cursor: pointer;
+    &:hover { color: $text-dark; }
+  }
+
+  h2 { font-size: 1.5rem; font-weight: 900; color: $text-dark; margin-bottom: 32px; }
+  
+  .modal-footer {
+    margin-top: 32px;
+    display: flex;
+    gap: 12px;
+  }
+}
+
+// Animations
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.spin { animation: spin 1s linear infinite; }
+
+// Premium Toast System
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.toast-item {
+  pointer-events: auto;
+  min-width: 320px;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  position: relative;
+  animation: toast-slide-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  &.success { border-left: 4px solid #10b981; .toast-icon { color: #10b981; } .toast-progress { background: #10b981; } }
+  &.error { border-left: 4px solid #f43f5e; .toast-icon { color: #f43f5e; } .toast-progress { background: #f43f5e; } }
+  &.info { border-left: 4px solid #3b82f6; .toast-icon { color: #3b82f6; } .toast-progress { background: #3b82f6; } }
+
+  .toast-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toast-content {
+    flex: 1;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.4;
+  }
+
+  .toast-close {
+    color: #94a3b8;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    &:hover { background: rgba(0, 0, 0, 0.05); color: #475569; }
+  }
+
+  .toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    transform-origin: left;
+    animation: toast-progress 5s linear forwards;
+  }
+}
+
+@keyframes toast-slide-in {
+  from { transform: translateX(100%) scale(0.9); opacity: 0; }
+  to { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+@keyframes toast-progress {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+

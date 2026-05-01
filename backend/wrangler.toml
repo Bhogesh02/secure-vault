@@ -1,0 +1,17 @@
+name = "aged-hill-1a6e"
+main = "src/index.ts"
+compatibility_date = "2026-04-29"
+
+[vars]
+APP_BASE_URL = "https://aged-hill-1a6e.tamminanabhogesh.workers.dev"
+ALLOWED_ORIGINS = "*"
+MAX_FILE_SIZE_BYTES = "5242880"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "vault-db"
+database_id = "1e5c2bec-c793-4ef3-97eb-3e3690d2a919"
+
+[[r2_buckets]]
+binding = "VAULT_BUCKET"
+bucket_name = "vault-files"
