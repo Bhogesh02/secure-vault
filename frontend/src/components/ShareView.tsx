@@ -44,6 +44,8 @@ export const ShareView: React.FC = () => {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [timeLeft, setTimeLeft] = useState<string>("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewType, setPreviewType] = useState<string | null>(null);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -95,48 +97,70 @@ export const ShareView: React.FC = () => {
     }
   };
 
+  const getDecryptionKey = async () => {
+    let decryptionKey = password;
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlKey = searchParams.get('k');
+    
+    if (data.wrapped_key && password) {
+      decryptionKey = await unwrapKey(data.wrapped_key, password);
+    } else if (urlKey) {
+      decryptionKey = atob(urlKey);
+    } else if (window.location.hash.includes('?k=')) {
+      const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+      if (hashParams.get('k')) {
+          decryptionKey = atob(hashParams.get('k')!);
+      }
+    }
+    return decryptionKey;
+  };
+
+  const processFile = async () => {
+    const file = data.item;
+    const decryptionKey = await getDecryptionKey();
+    
+    const urlResponse = await fileApi.createDownloadUrl("", file.id, decryptionKey, token);
+    const blob = await fileApi.downloadBlob(urlResponse.data.download_url);
+    
+    let finalBlob = blob;
+    if (file.encryption_salt && file.encryption_iv) {
+      if (!decryptionKey) {
+        throw new Error("Encryption key required.");
+      }
+      finalBlob = await decryptFile(blob, decryptionKey, file.encryption_salt, file.encryption_iv, file.content_type);
+    }
+    return finalBlob;
+  };
+
   const handleDownload = async () => {
     if (!data?.item) return;
     setBusy(true);
     try {
-      const file = data.item;
-      let decryptionKey = password;
-      
-      const searchParams = new URLSearchParams(window.location.search);
-      const urlKey = searchParams.get('k');
-      
-      if (data.wrapped_key && password) {
-        decryptionKey = await unwrapKey(data.wrapped_key, password);
-      } else if (urlKey) {
-        decryptionKey = atob(urlKey);
-      } else if (window.location.hash.includes('?k=')) {
-        const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
-        if (hashParams.get('k')) {
-            decryptionKey = atob(hashParams.get('k')!);
-        }
-      }
-      
-      const urlResponse = await fileApi.createDownloadUrl("", file.id, decryptionKey, token);
-      const blob = await fileApi.downloadBlob(urlResponse.data.download_url);
-      
-      let finalBlob = blob;
-      if (file.encryption_salt && file.encryption_iv) {
-        if (!decryptionKey) {
-          showToast("error", "Encryption key required.");
-          setBusy(false);
-          return;
-        }
-        finalBlob = await decryptFile(blob, decryptionKey, file.encryption_salt, file.encryption_iv, file.content_type);
-      }
-
+      const finalBlob = await processFile();
       const url = URL.createObjectURL(finalBlob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = file.filename;
+      link.download = data.item.filename;
       link.click();
       showToast("success", "Securing download...");
-    } catch (err) {
-      showToast("error", "Download failed. Key might be wrong.");
+    } catch (err: any) {
+      showToast("error", err.message || "Download failed. Key might be wrong.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleView = async () => {
+    if (!data?.item) return;
+    setBusy(true);
+    try {
+      const finalBlob = await processFile();
+      const url = URL.createObjectURL(finalBlob);
+      setPreviewUrl(url);
+      setPreviewType(data.item.content_type);
+      showToast("success", "Secure preview loaded.");
+    } catch (err: any) {
+      showToast("error", err.message || "Preview failed. Key might be wrong.");
     } finally {
       setBusy(false);
     }
@@ -187,6 +211,7 @@ export const ShareView: React.FC = () => {
 
   const file = data?.item;
   const isEncrypted = file?.encryption_salt && file?.encryption_iv;
+  const needsManualKey = isEncrypted && !data.wrapped_key && !window.location.search.includes('k=') && !window.location.hash.includes('?k=');
 
   return (
     <div className="share-view-root">
@@ -246,7 +271,7 @@ export const ShareView: React.FC = () => {
           </div>
 
           <AnimatePresence>
-            {isEncrypted && (
+            {needsManualKey && (
               <motion.div 
                 className="decryption-section"
                 initial={{ height: 0, opacity: 0 }}
@@ -268,56 +293,66 @@ export const ShareView: React.FC = () => {
             )}
           </AnimatePresence>
 
-          <div className="action-area">
-            {data.access_level !== 'view' && (
-              <button 
-                className="download-btn"
-                onClick={handleDownload}
-                disabled={busy || timeLeft === 'Expired'}
-                style={{ width: '100%', marginBottom: data.access_level === 'both' ? '12px' : '0' }}
-              >
-                {busy ? <div className="spinner"></div> : <Download size={20} />}
-                <span>{busy ? "Securing Data..." : "Secure Download"}</span>
-              </button>
-            )}
-            
-            {data.access_level === 'view' && (
-              <div style={{ padding: '16px', background: '#f1f5f9', borderRadius: '12px', textAlign: 'center', color: '#64748b' }}>
-                <Eye size={24} style={{ margin: '0 auto 8px', display: 'block' }} />
-                <p style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 600 }}>View-only Access</p>
-                <p style={{ margin: '4px 0 0', fontSize: '0.8125rem' }}>Downloading is disabled by the owner.</p>
+          {previewUrl ? (
+            <motion.div 
+              className="media-preview-container"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              style={{ marginTop: '20px', background: '#0f172a', padding: '16px', borderRadius: '12px' }}
+            >
+              {previewType?.startsWith('video/') ? (
+                <video src={previewUrl} controls style={{ width: '100%', maxHeight: '400px', borderRadius: '8px' }} />
+              ) : previewType?.startsWith('audio/') ? (
+                <audio src={previewUrl} controls style={{ width: '100%', borderRadius: '8px' }} />
+              ) : previewType?.startsWith('image/') ? (
+                <img src={previewUrl} alt="Preview" style={{ width: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: '8px' }} />
+              ) : (
+                <div style={{ padding: '40px 20px', textAlign: 'center', color: '#94a3b8' }}>
+                  <FileGeneric size={48} color="#64748b" style={{ margin: '0 auto 16px', display: 'block' }} />
+                  <p>Preview not available for this file type.</p>
+                </div>
+              )}
+            </motion.div>
+          ) : (
+            <div className="action-area">
+              {data.access_level !== 'view' && (
                 <button 
-                  className="primary-btn"
-                  onClick={async () => {
-                    const originalClick = document.createElement;
-                    // Intercept the download click from handleDownload to just show preview
-                    const _orig = URL.createObjectURL;
-                    URL.createObjectURL = (blob) => {
-                       const url = _orig(blob);
-                       showToast("success", "Preview ready");
-                       window.open(url, "_blank"); // Open in new tab for preview
-                       return url;
-                    };
-                    document.createElement = (tag: string) => {
-                       if(tag === 'a') return { click: () => {} } as any;
-                       return originalClick.call(document, tag);
-                    };
-                    await handleDownload();
-                    URL.createObjectURL = _orig;
-                    document.createElement = originalClick;
-                  }}
+                  className="download-btn"
+                  onClick={handleDownload}
                   disabled={busy || timeLeft === 'Expired'}
-                  style={{ width: '100%', marginTop: '16px' }}
+                  style={{ width: '100%', marginBottom: data.access_level === 'both' ? '12px' : '0' }}
                 >
-                  <Eye size={18} style={{ marginRight: '8px' }} /> View Securely
+                  {busy ? <div className="spinner"></div> : <Download size={20} />}
+                  <span>{busy ? "Securing Data..." : "Secure Download"}</span>
                 </button>
-              </div>
-            )}
+              )}
+              
+              {(data.access_level === 'view' || data.access_level === 'both') && (
+                <div style={{ padding: '16px', background: '#f1f5f9', borderRadius: '12px', textAlign: 'center', color: '#64748b' }}>
+                  {data.access_level === 'view' && (
+                    <>
+                      <Eye size={24} style={{ margin: '0 auto 8px', display: 'block' }} />
+                      <p style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 600 }}>View-only Access</p>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '0.8125rem' }}>Downloading is disabled by the owner.</p>
+                    </>
+                  )}
+                  <button 
+                    className="primary-btn"
+                    onClick={handleView}
+                    disabled={busy || timeLeft === 'Expired'}
+                    style={{ width: '100%', marginTop: data.access_level === 'view' ? '16px' : '0' }}
+                  >
+                    {busy ? <div className="spinner"></div> : <Eye size={18} style={{ marginRight: '8px' }} />}
+                    <span>{busy ? "Loading Preview..." : "View Securely"}</span>
+                  </button>
+                </div>
+              )}
 
-            <p className="safety-note" style={{ marginTop: '16px' }}>
-              Files are processed locally. Your keys never leave your device.
-            </p>
-          </div>
+              <p className="safety-note" style={{ marginTop: '16px' }}>
+                Files are processed locally. Your keys never leave your device.
+              </p>
+            </div>
+          )}
         </motion.div>
 
         <footer className="share-footer">
