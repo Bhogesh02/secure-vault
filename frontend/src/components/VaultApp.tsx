@@ -47,7 +47,7 @@ import { Field } from "./Field";
 import { Session, VaultFile, Folder as VaultFolder } from "../types/domain";
 import { fileApi } from "../lib/api/files";
 import { securityApi, shareApi } from "../lib/api/security";
-import { encryptFile, decryptFile } from "../lib/utils/crypto";
+import { encryptFile, decryptFile, wrapKey } from "../lib/utils/crypto";
 import { useVault } from "../hooks/useVault";
 import { APP_NAME } from "../lib/constants";
 
@@ -458,6 +458,9 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
     return folders.find(f => f.id === pendingFolderId)?.name || "Vault";
   }, [pendingFolderId, folders]);
 
+  const [requireSharePassword, setRequireSharePassword] = useState(false);
+  const [sharePassword, setSharePassword] = useState("");
+
   async function handleShare(e: React.FormEvent) {
     e.preventDefault();
     if (!sharingItem) return;
@@ -465,16 +468,35 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
     const formData = new FormData(e.currentTarget as HTMLFormElement);
     const expiresMinutes = parseInt(formData.get("expires") as string) || 60;
     const isOneTime = formData.get("one-time") === "on";
+    const accessLevel = formData.get("access-level") as 'view' | 'download' | 'both';
 
     try {
+      let wrappedKey: string | undefined = undefined;
+      
+      if (requireSharePassword && sharePassword) {
+        if (activeFolderPassword) {
+          wrappedKey = await wrapKey(activeFolderPassword, sharePassword);
+        }
+      }
+
       const res = await shareApi.createLink(session.accessToken, {
         fileId: sharingItem.type === 'file' ? sharingItem.id : undefined,
         folderId: sharingItem.type === 'folder' ? sharingItem.id : undefined,
         isOneTime,
-        expiresMinutes
+        expiresMinutes,
+        accessLevel,
+        password: requireSharePassword ? sharePassword : undefined,
+        wrappedKey
       });
+      
       if (res.success) {
-        const fullUrl = `${window.location.origin}/#/share/${res.data.token}`;
+        let fullUrl = `${window.location.origin}/#/share/${res.data.token}`;
+        
+        if (!requireSharePassword && activeFolderPassword) {
+          const encodedKey = btoa(activeFolderPassword);
+          fullUrl += `?k=${encodedKey}`;
+        }
+        
         setShareLink(fullUrl);
         showToast("success", "Encrypted sharing link generated");
       }
@@ -1316,7 +1338,7 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
         )}
       </AnimatePresence>
 
-      <Modal isOpen={showShareModal} onClose={() => { setShowShareModal(false); setShareLink(null); }} title="Secure Sharing">
+      <Modal isOpen={showShareModal} onClose={() => { setShowShareModal(false); setShareLink(null); setRequireSharePassword(false); setSharePassword(""); }} title="Secure Sharing">
         <div style={{ padding: '10px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#f8fafc', borderRadius: '16px', marginBottom: '24px' }}>
             <div style={{ padding: '10px', borderRadius: '12px', background: 'white', color: '#3b82f6', border: '1px solid #f1f5f9' }}>
@@ -1332,8 +1354,17 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
             <form onSubmit={handleShare}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div className="field-group">
+                  <label style={{ fontSize: '0.875rem', fontWeight: 700, color: '#475569', marginBottom: '8px', display: 'block' }}>Permissions</label>
+                  <select name="access-level" defaultValue="both" style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '0.9375rem' }}>
+                    <option value="both">View and Download</option>
+                    <option value="view">View Only</option>
+                    <option value="download">Download Only</option>
+                  </select>
+                </div>
+
+                <div className="field-group">
                   <label style={{ fontSize: '0.875rem', fontWeight: 700, color: '#475569', marginBottom: '8px', display: 'block' }}>Expiration</label>
-                  <select name="expires" style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '0.9375rem' }}>
+                  <select name="expires" defaultValue="60" style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '0.9375rem' }}>
                     <option value="15">15 Minutes</option>
                     <option value="60">1 Hour</option>
                     <option value="1440">24 Hours</option>
@@ -1344,6 +1375,39 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px', background: '#f1f5f9' }}>
                   <input type="checkbox" name="one-time" id="one-time" defaultChecked style={{ width: '18px', height: '18px' }} />
                   <label htmlFor="one-time" style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#475569', cursor: 'pointer' }}>One-time access only</label>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <input 
+                      type="checkbox" 
+                      id="require-password" 
+                      checked={requireSharePassword}
+                      onChange={(e) => setRequireSharePassword(e.target.checked)}
+                      style={{ width: '18px', height: '18px', accentColor: '#f59e0b' }} 
+                    />
+                    <label htmlFor="require-password" style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#b45309', cursor: 'pointer' }}>Require Custom Password</label>
+                  </div>
+                  
+                  {requireSharePassword && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} style={{ overflow: 'hidden' }}>
+                      <input 
+                        type="text" 
+                        value={sharePassword}
+                        onChange={(e) => setSharePassword(e.target.value)}
+                        placeholder="Enter password for this link" 
+                        required
+                        autoComplete="off"
+                        style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #fcd34d', fontSize: '0.875rem' }}
+                      />
+                    </motion.div>
+                  )}
+                  
+                  {!requireSharePassword && activeFolderPassword && (
+                    <p style={{ margin: 0, fontSize: '0.8125rem', color: '#b45309', lineHeight: 1.4 }}>
+                      ⚠️ <strong>Passwordless mode:</strong> Anyone with the link will be able to decrypt this file instantly. The decryption key will be embedded securely in the link.
+                    </p>
+                  )}
                 </div>
 
                 <div style={{ padding: '12px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.05)', color: '#3b82f6', fontSize: '0.8125rem', lineHeight: 1.5 }}>

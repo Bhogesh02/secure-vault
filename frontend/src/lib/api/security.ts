@@ -15,12 +15,17 @@ export const securityApi = {
 };
 
 export const shareApi = {
-  createLink: (token: string, data: { fileId?: number; folderId?: number; isOneTime?: boolean; expiresMinutes?: number }) =>
+  createLink: (token: string, data: { fileId?: number; folderId?: number; isOneTime?: boolean; expiresMinutes?: number; accessLevel?: 'view' | 'download' | 'both'; password?: string; wrappedKey?: string; }) =>
     apiRequest<{ token: string; expires_at: string }>("/share/create", {
       method: "POST",
       body: JSON.stringify(data)
     }, { token }),
     
-  accessLink: (token: string) =>
-    apiRequest<any>(`/share/access/${token}`),
+  accessLink: (token: string, password?: string) => {
+    const headers: Record<string, string> = {};
+    if (password) {
+      headers["x-share-password"] = password;
+    }
+    return apiRequest<any>(`/share/access/${token}`, { headers });
+  }
 };

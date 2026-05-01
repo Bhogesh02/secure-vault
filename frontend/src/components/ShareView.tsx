@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { shareApi } from '../lib/api/security';
 import { fileApi } from '../lib/api/files';
-import { decryptFile } from '../lib/utils/crypto';
+import { decryptFile, unwrapKey } from '../lib/utils/crypto';
 import { useToast } from './Toast';
 import { Field } from './Field';
 import { Loader } from './Loader';
@@ -74,12 +74,17 @@ export const ShareView: React.FC = () => {
     return () => clearInterval(interval);
   }, [data]);
 
-  const fetchSharedItem = async () => {
+  const fetchSharedItem = async (providedPassword?: string) => {
     setLoading(true);
+    setError(null);
     try {
-      const res = await shareApi.accessLink(token!);
+      const res = await shareApi.accessLink(token!, providedPassword);
       if (res.success) {
-        setData(res.data);
+        if (res.data.passwordRequired) {
+          setData({ passwordRequired: true });
+        } else {
+          setData(res.data);
+        }
       } else {
         setError(res.message || "Failed to load link");
       }
@@ -95,23 +100,33 @@ export const ShareView: React.FC = () => {
     setBusy(true);
     try {
       const file = data.item;
-      // For shared items, the backend provides the direct link or we fetch it
-      // In our current backend, accessSharedItem returns the file metadata
-      // We need to request a download URL. But wait, we don't have a session!
-      // The backend share logic needs to allow downloading without a full user session if token is valid.
+      let decryptionKey = password;
       
-      // Let's assume the backend allows signed tokens for shares
-      const urlResponse = await fileApi.createDownloadUrl("", file.id, password, token);
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlKey = searchParams.get('k');
+      
+      if (data.wrapped_key && password) {
+        decryptionKey = await unwrapKey(data.wrapped_key, password);
+      } else if (urlKey) {
+        decryptionKey = atob(urlKey);
+      } else if (window.location.hash.includes('?k=')) {
+        const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+        if (hashParams.get('k')) {
+            decryptionKey = atob(hashParams.get('k')!);
+        }
+      }
+      
+      const urlResponse = await fileApi.createDownloadUrl("", file.id, decryptionKey, token);
       const blob = await fileApi.downloadBlob(urlResponse.data.download_url);
       
       let finalBlob = blob;
       if (file.encryption_salt && file.encryption_iv) {
-        if (!password) {
+        if (!decryptionKey) {
           showToast("error", "Encryption key required.");
           setBusy(false);
           return;
         }
-        finalBlob = await decryptFile(blob, password, file.encryption_salt, file.encryption_iv, file.content_type);
+        finalBlob = await decryptFile(blob, decryptionKey, file.encryption_salt, file.encryption_iv, file.content_type);
       }
 
       const url = URL.createObjectURL(finalBlob);
@@ -141,6 +156,30 @@ export const ShareView: React.FC = () => {
           <h1>Link Inaccessible</h1>
           <p>{error}</p>
           <button onClick={() => window.location.href = "/"} className="back-btn">Return to Safety</button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (data?.passwordRequired) {
+    return (
+      <div className="share-error-container">
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="error-card" style={{ maxWidth: '400px', width: '90%' }}>
+          <Lock size={48} color="#3b82f6" style={{ margin: '0 auto 20px', display: 'block' }} />
+          <h2 style={{ textAlign: 'center', marginBottom: '16px', color: '#0f172a', fontWeight: 800 }}>Password Protected</h2>
+          <p style={{ textAlign: 'center', color: '#64748b', marginBottom: '24px' }}>This link is secured with a password.</p>
+          <form onSubmit={(e) => { e.preventDefault(); fetchSharedItem(password); }}>
+            <Field label="Link Password" icon={<KeyRound size={20} />}>
+              <input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password"
+                autoFocus
+              />
+            </Field>
+            <button type="submit" className="primary-btn" style={{ width: '100%', marginTop: '20px' }}>Access Link</button>
+          </form>
         </motion.div>
       </div>
     );
@@ -230,16 +269,53 @@ export const ShareView: React.FC = () => {
           </AnimatePresence>
 
           <div className="action-area">
-            <button 
-              className="download-btn"
-              onClick={handleDownload}
-              disabled={busy || timeLeft === 'Expired'}
-            >
-              {busy ? <div className="spinner"></div> : <Download size={20} />}
-              <span>{busy ? "Securing Data..." : "Secure Download"}</span>
-            </button>
-            <p className="safety-note">
-              Downloads are processed locally. Your keys never leave your device.
+            {data.access_level !== 'view' && (
+              <button 
+                className="download-btn"
+                onClick={handleDownload}
+                disabled={busy || timeLeft === 'Expired'}
+                style={{ width: '100%', marginBottom: data.access_level === 'both' ? '12px' : '0' }}
+              >
+                {busy ? <div className="spinner"></div> : <Download size={20} />}
+                <span>{busy ? "Securing Data..." : "Secure Download"}</span>
+              </button>
+            )}
+            
+            {data.access_level === 'view' && (
+              <div style={{ padding: '16px', background: '#f1f5f9', borderRadius: '12px', textAlign: 'center', color: '#64748b' }}>
+                <Eye size={24} style={{ margin: '0 auto 8px', display: 'block' }} />
+                <p style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 600 }}>View-only Access</p>
+                <p style={{ margin: '4px 0 0', fontSize: '0.8125rem' }}>Downloading is disabled by the owner.</p>
+                <button 
+                  className="primary-btn"
+                  onClick={async () => {
+                    const originalClick = document.createElement;
+                    // Intercept the download click from handleDownload to just show preview
+                    const _orig = URL.createObjectURL;
+                    URL.createObjectURL = (blob) => {
+                       const url = _orig(blob);
+                       showToast("success", "Preview ready");
+                       window.open(url, "_blank"); // Open in new tab for preview
+                       return url;
+                    };
+                    document.createElement = (tag: string) => {
+                       if(tag === 'a') return { click: () => {} } as any;
+                       return originalClick.call(document, tag);
+                    };
+                    await handleDownload();
+                    URL.createObjectURL = _orig;
+                    document.createElement = originalClick;
+                  }}
+                  disabled={busy || timeLeft === 'Expired'}
+                  style={{ width: '100%', marginTop: '16px' }}
+                >
+                  <Eye size={18} style={{ marginRight: '8px' }} /> View Securely
+                </button>
+              </div>
+            )}
+
+            <p className="safety-note" style={{ marginTop: '16px' }}>
+              Files are processed locally. Your keys never leave your device.
             </p>
           </div>
         </motion.div>

@@ -59,3 +59,39 @@ export async function decryptFile(blob: Blob, password: string, saltB64: string,
 
   return new Blob([decryptedBuffer], { type: originalType });
 }
+
+export async function wrapKey(secretToWrap: string, wrappingPassword: string): Promise<string> {
+  const salt = window.crypto.getRandomValues(new Uint8Array(16));
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(wrappingPassword, salt);
+  
+  const encryptedBuffer = await window.crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encoder.encode(secretToWrap)
+  );
+
+  const saltB64 = btoa(String.fromCharCode(...Array.from(salt)));
+  const ivB64 = btoa(String.fromCharCode(...Array.from(iv)));
+  const encryptedB64 = btoa(String.fromCharCode(...Array.from(new Uint8Array(encryptedBuffer))));
+  
+  return `${saltB64}:${ivB64}:${encryptedB64}`;
+}
+
+export async function unwrapKey(wrappedString: string, wrappingPassword: string): Promise<string> {
+  const parts = wrappedString.split(':');
+  if (parts.length !== 3) throw new Error("Invalid wrapped key format");
+  
+  const salt = new Uint8Array(atob(parts[0]).split("").map((c) => c.charCodeAt(0)));
+  const iv = new Uint8Array(atob(parts[1]).split("").map((c) => c.charCodeAt(0)));
+  const encrypted = new Uint8Array(atob(parts[2]).split("").map((c) => c.charCodeAt(0)));
+  
+  const key = await deriveKey(wrappingPassword, salt);
+  const decryptedBuffer = await window.crypto.subtle.decrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encrypted
+  );
+  
+  return new TextDecoder().decode(decryptedBuffer);
+}
