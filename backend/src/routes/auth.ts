@@ -28,7 +28,7 @@ function setAuthCookies(headers: Headers, accessToken: string, refreshToken: str
   const maxAge = remember ? 60 * 60 * 24 * 7 : undefined; // 7 days if remember checked
   // Only use Secure if we're not on localhost (or if we want to force it)
   const isSecure = true; 
-  const base = `HttpOnly; ${isSecure ? "Secure; " : ""}SameSite=Lax; Path=/`;
+  const base = `HttpOnly; Secure; SameSite=None; Path=/`;
   
   headers.append("Set-Cookie", `vault_access_token=${accessToken}; ${base}`);
   headers.append("Set-Cookie", `vault_refresh_token=${refreshToken}; ${base}${maxAge ? `; Max-Age=${maxAge}` : ""}`);
@@ -330,7 +330,7 @@ async function logout(context: AppContext): Promise<Response> {
   }
 
   const headers = new Headers();
-  const base = "HttpOnly; Secure; SameSite=Lax; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  const base = "HttpOnly; Secure; SameSite=None; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT";
   headers.append("Set-Cookie", `vault_access_token=; ${base}`);
   headers.append("Set-Cookie", `vault_refresh_token=; ${base}`);
   
