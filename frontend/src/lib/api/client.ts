@@ -1,4 +1,4 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8787";
+export const API_BASE_URL = import.meta.env.PROD ? "/api" : (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8787");
 
 let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
