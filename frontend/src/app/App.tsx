@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthShell } from "../components/AuthShell";
 import { VaultApp } from "../components/VaultApp";
+import { ShareView } from "../components/ShareView";
 import { ToastProvider } from "../components/Toast";
 import { Session, User } from "../types/domain";
 import { authApi } from "../lib/api/auth";
@@ -63,13 +65,24 @@ function AppContent() {
 
   return (
     <ToastProvider>
-      <div className="app-root">
-        {user ? (
-          <VaultApp session={{ user, accessToken: "", refreshToken: "" }} onLogout={handleLogout} />
-        ) : (
-          <AuthShell onLogin={(session) => handleLogin({ user: session.user })} />
-        )}
-      </div>
+      <BrowserRouter>
+        <div className="app-root">
+          <Routes>
+            <Route path="/share/:token" element={<ShareView />} />
+            <Route 
+              path="/" 
+              element={
+                user ? (
+                  <VaultApp session={{ user, accessToken: "", refreshToken: "" }} onLogout={handleLogout} />
+                ) : (
+                  <AuthShell onLogin={(session) => handleLogin({ user: session.user })} />
+                )
+              } 
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </BrowserRouter>
     </ToastProvider>
   );
 }

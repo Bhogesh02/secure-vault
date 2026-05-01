@@ -60,12 +60,21 @@ async function accessSharedItem(context: AppContext, token: string): Promise<Res
   // The user should provide the decryption key separately or we embed it (less secure).
   // For now, let's return the item metadata.
   
+  const responseData: any = { 
+    type: link.file_id ? 'file' : 'folder', 
+    expires_at: link.expires_at,
+    is_one_time: link.is_one_time
+  };
+
   if (link.file_id) {
     const file = await context.env.DB.prepare("SELECT * FROM files WHERE id = ?1").bind(link.file_id).first();
-    return jsonResponse(true, { type: 'file', item: file }, "Shared file accessed");
+    responseData.item = file;
   } else {
     const folder = await context.env.DB.prepare("SELECT * FROM folders WHERE id = ?1").bind(link.folder_id).first();
     const files = await context.env.DB.prepare("SELECT * FROM files WHERE folder_id = ?1").bind(link.folder_id).all();
-    return jsonResponse(true, { type: 'folder', item: folder, files: files.results }, "Shared folder accessed");
+    responseData.item = folder;
+    responseData.files = files.results;
   }
+
+  return jsonResponse(true, responseData, "Shared item accessed");
 }
