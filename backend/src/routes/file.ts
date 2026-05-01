@@ -174,6 +174,29 @@ async function downloadFile(context: AppContext): Promise<Response> {
   const fileId = Number(context.url.pathname.split("/").pop());
   assert(Number.isInteger(fileId) && fileId > 0, "Invalid file id");
 
+  const shareToken = context.url.searchParams.get("share_token");
+  if (shareToken) {
+    const link = await context.env.DB.prepare("SELECT * FROM sharing_links WHERE token = ?1 LIMIT 1").bind(shareToken).first<any>();
+    assert(link, "Invalid share token", 401);
+    assert(link.file_id === fileId || link.folder_id > 0, "Token not valid for this file", 403);
+    assert(new Date(link.expires_at).getTime() > Date.now(), "Link expired", 410);
+    
+    if (link.is_one_time) {
+      if (link.accessed_count > 0) {
+        return errorResponse("This one-time link has already been used", 410);
+      }
+      await context.env.DB.prepare("UPDATE sharing_links SET accessed_count = accessed_count + 1 WHERE id = ?1").bind(link.id).run();
+    }
+
+    const file = await context.env.DB.prepare("SELECT id, user_id, filename, file_url, content_type FROM files WHERE id = ?1 LIMIT 1").bind(fileId).first<any>();
+    assert(file, "File not found", 404);
+    
+    const object = await context.env.VAULT_BUCKET.get(file.file_url);
+    assert(object, "File not found", 404);
+
+    return new Response(object.body, { status: 200, headers: { "content-type": file.content_type, "cache-control": "private, max-age=60" } });
+  }
+
   const signedToken = context.url.searchParams.get("token");
   if (!signedToken) {
     return withAuth(async (ctx) => {

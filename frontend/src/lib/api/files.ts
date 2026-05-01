@@ -1,5 +1,5 @@
 import { VaultFile } from "../../types/domain";
-import { apiRequest } from "./client";
+import { apiRequest, API_BASE_URL } from "./client";
 
 export const fileApi = {
   list: (token: string, folderId: number, folderPassword?: string, tab?: string) => {
@@ -37,7 +37,14 @@ export const fileApi = {
     apiRequest<{ id: number }>("/file/upload/complete", { method: "POST", body: JSON.stringify(data) }, { token }),
 
   createDownloadUrl: (token: string, fileId: number, folderPassword?: string, shareToken?: string) => {
-    const url = shareToken ? `/file/download/${fileId}?token=${encodeURIComponent(shareToken)}` : `/file/download/${fileId}`;
+    if (shareToken) {
+      return Promise.resolve({
+        success: true,
+        message: "Download URL generated",
+        data: { download_url: `${API_BASE_URL}/file/download/${fileId}?share_token=${encodeURIComponent(shareToken)}` }
+      });
+    }
+    const url = `/file/download/${fileId}`;
     return apiRequest<{ download_url: string }>(url, { method: "GET" }, { token, folderPassword });
   },
 

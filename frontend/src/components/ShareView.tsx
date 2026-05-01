@@ -312,6 +312,22 @@ export const ShareView: React.FC = () => {
                   <p>Preview not available for this file type.</p>
                 </div>
               )}
+
+              {data.access_level !== 'view' && (
+                <button 
+                  className="download-btn"
+                  onClick={() => {
+                    const link = document.createElement("a");
+                    link.href = previewUrl;
+                    link.download = data.item.filename;
+                    link.click();
+                  }}
+                  style={{ width: '100%', marginTop: '16px' }}
+                >
+                  <Download size={20} />
+                  <span>Save to Device</span>
+                </button>
+              )}
             </motion.div>
           ) : (
             <div className="action-area">

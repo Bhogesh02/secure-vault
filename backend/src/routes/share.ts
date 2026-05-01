@@ -79,9 +79,6 @@ async function accessSharedItem(context: AppContext, token: string): Promise<Res
     }
   }
 
-  // Update access count
-  await context.env.DB.prepare("UPDATE sharing_links SET accessed_count = accessed_count + 1 WHERE id = ?1").bind(link.id).run();
-
   const responseData: any = { 
     type: link.file_id ? 'file' : 'folder', 
     expires_at: link.expires_at,
