@@ -689,15 +689,143 @@
   }
 }
 
-// ─── Folder Cards (special style) ──────────────────────────────────────────
+// ─── Folder Cards ───────────────────────────────────────────────────────────
 .grid-item.folder-card {
   .preview-canvas {
-    background: linear-gradient(135deg, #eff6ff, #dbeafe);
-    border: 1px solid #bfdbfe;
+    background: linear-gradient(145deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1.5px solid #bfdbfe;
+
+    // Make the icon bigger and centered nicely
+    svg { filter: drop-shadow(0 4px 8px rgba(37,99,235,0.2)); }
   }
-  &.locked-folder .preview-canvas {
-    background: linear-gradient(135deg, #f5f3ff, #ede9fe);
-    border-color: #c4b5fd;
+
+  .item-meta .text-content h4 { color: #1e40af; }
+
+  &.locked-folder {
+    .preview-canvas {
+      background: linear-gradient(145deg, #f5f3ff 0%, #ede9fe 100%);
+      border-color: #c4b5fd;
+      svg { filter: drop-shadow(0 4px 8px rgba(109,40,217,0.2)); }
+    }
+    .item-meta .text-content h4 { color: #5b21b6; }
+  }
+}
+
+// ─── Header User Chip ───────────────────────────────────────────────────────
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px 5px 5px;
+  border-radius: 10px;
+  border: 1px solid #e8ecf0;
+  background: white;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  &:hover { background: #f8fafc; }
+
+  .avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    font-size: 0.8125rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .user-name {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+  }
+}
+
+// ─── Files Meta Bar ─────────────────────────────────────────────────────────
+.files-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 10px 16px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e8ecf0;
+
+  .files-count {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #0f172a;
+    svg { color: #94a3b8; }
+  }
+
+  .sort-control {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+    padding: 0;
+    &:hover { color: #0f172a; }
+  }
+}
+
+// ─── File Card Meta ─────────────────────────────────────────────────────────
+// Override item-meta to support new file-name / file-info / encrypted-badge layout
+.grid-item .item-meta {
+  padding: 2px 2px 0;
+  display: block; // stack children vertically
+
+  .file-name {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 28px; // space for the more-btn
+  }
+
+  .file-info {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    font-weight: 500;
+    margin: 0 0 8px;
+  }
+
+  .encrypted-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.02em;
+  }
+
+  // Revert the more-btn to absolute so it sits top-right of item-meta
+  & + .more-btn,
+  .more-btn {
+    position: absolute;
+    top: auto;
+    right: 14px;
+    bottom: auto;
   }
 }
 
