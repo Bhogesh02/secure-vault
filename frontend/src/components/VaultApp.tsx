@@ -474,7 +474,7 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
         expiresMinutes
       });
       if (res.success) {
-        const fullUrl = `${window.location.origin}/share/${res.data.token}`;
+        const fullUrl = `${window.location.origin}/#/share/${res.data.token}`;
         setShareLink(fullUrl);
         showToast("success", "Encrypted sharing link generated");
       }

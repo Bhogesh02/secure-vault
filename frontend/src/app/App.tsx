@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthShell } from "../components/AuthShell";
 import { VaultApp } from "../components/VaultApp";
 import { ShareView } from "../components/ShareView";
@@ -65,7 +65,7 @@ function AppContent() {
 
   return (
     <ToastProvider>
-      <BrowserRouter>
+      <HashRouter>
         <div className="app-root">
           <Routes>
             <Route path="/share/:token" element={<ShareView />} />
@@ -82,7 +82,7 @@ function AppContent() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
-      </BrowserRouter>
+      </HashRouter>
     </ToastProvider>
   );
 }
