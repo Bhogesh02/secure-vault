@@ -77,18 +77,16 @@ export const PasswordResetFlow: React.FC<PasswordResetFlowProps> = ({ onBack, in
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.3 }}
       >
-        <header className="form-header" style={{ position: 'relative' }}>
+        <header className="form-header">
           {busy && <AuthIndicator />}
           <button 
             type="button" 
+            className="link"
             onClick={onBack}
             style={{ 
               display: 'flex', 
               alignItems: 'center', 
               gap: '6px', 
-              color: '#3b82f6', 
-              fontSize: '0.875rem', 
-              fontWeight: 800, 
               marginBottom: '16px',
               padding: '4px 0'
             }}

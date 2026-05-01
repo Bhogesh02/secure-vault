@@ -209,33 +209,22 @@ export function AuthShell({ onLogin }: { onLogin: (session: Session, remember: b
   const currentSide = sideContent[mode];
 
   return (
-    <main className="auth-page" style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc' }}>
+    <main className="auth-page">
       <motion.section 
         className="auth-side-panel"
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
-        style={{ 
-          flex: '1.2', 
-          position: 'relative', 
-          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', 
-          padding: '60px', 
-          color: 'white',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          overflow: 'hidden'
-        }}
       >
         {/* Background Decorative Element */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.1, backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '40px 40px' }}></div>
+        <div className="bg-decorative"></div>
 
-        <div className="company-logo" style={{ position: 'relative', zIndex: 10, display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <img src="/favicon.png" alt={APP_NAME} style={{ width: '48px', height: '48px', borderRadius: '14px', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }} />
-          <span style={{ fontSize: '1.5rem', fontWeight: 900, letterSpacing: '0.05em' }}>{APP_NAME_UPPER}</span>
+        <div className="company-logo">
+          <img src="/favicon.png" alt={APP_NAME} />
+          <span>{APP_NAME_UPPER}</span>
         </div>
 
-        <div className="side-content" style={{ position: 'relative', zIndex: 10, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div className="side-content">
           <AnimatePresence mode="wait">
             <motion.div
               key={mode}
@@ -244,18 +233,18 @@ export function AuthShell({ onLogin }: { onLogin: (session: Session, remember: b
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
             >
-              <span className="side-kicker" style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.25em', fontSize: '0.875rem', display: 'block', marginBottom: '1.5rem' }}>
+              <span className="side-kicker">
                 {currentSide.kicker}
               </span>
-              <h1 style={{ fontSize: '4rem', fontWeight: 900, lineHeight: 1, marginBottom: '2rem', letterSpacing: '-0.04em' }}>
+              <h1>
                 {currentSide.title}
               </h1>
-              <p className="side-desc" style={{ fontSize: '1.25rem', opacity: 0.9, lineHeight: 1.6, marginBottom: '2.5rem', maxWidth: '540px', fontWeight: 500 }}>
+              <p className="side-desc">
                 {currentSide.desc}
               </p>
 
               {currentSide.steps && (
-                <div className="auth-steps" style={{ marginBottom: '3rem' }}>
+                <div className="auth-steps">
                   {currentSide.steps.map((step: string, i: number) => (
                     <motion.div 
                       key={i}
@@ -288,43 +277,21 @@ export function AuthShell({ onLogin }: { onLogin: (session: Session, remember: b
                 </div>
               )}
               
-              <div className="features-list" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', maxWidth: '640px' }}>
+              <div className="features-list">
                 {currentSide.features.map((f, i) => (
                   <motion.div 
                     key={i} 
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.1 + 0.4 }}
-                    className="feature-item" 
-                    style={{ 
-                      background: 'rgba(255, 255, 255, 0.1)', 
-                      padding: '24px', 
-                      borderRadius: '28px', 
-                      border: '1px solid rgba(255, 255, 255, 0.2)', 
-                      backdropFilter: 'blur(16px)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '20px',
-                      boxShadow: '0 10px 30px rgba(0,0,0,0.05)'
-                    }}
+                    className="feature-item"
                   >
-                    <div style={{ 
-                      color: f.color, 
-                      background: 'white', 
-                      minWidth: '48px', 
-                      height: '48px', 
-                      borderRadius: '16px', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-                      flexShrink: 0
-                    }}>
+                    <div className="feature-icon-wrapper" style={{ color: f.color }}>
                       {f.icon}
                     </div>
-                    <div>
-                      <h3 style={{ fontSize: '1.0625rem', fontWeight: 800, marginBottom: '2px', color: 'white' }}>{f.label}</h3>
-                      <p style={{ fontSize: '0.8125rem', opacity: 0.85, color: 'white', fontWeight: 600, margin: 0, whiteSpace: 'nowrap' }}>{f.desc}</p>
+                    <div className="feature-text">
+                      <h3>{f.label}</h3>
+                      <p>{f.desc}</p>
                     </div>
                   </motion.div>
                 ))}
@@ -333,7 +300,7 @@ export function AuthShell({ onLogin }: { onLogin: (session: Session, remember: b
           </AnimatePresence>
         </div>
 
-        <div style={{ position: 'relative', zIndex: 10, opacity: 0.6, fontSize: '0.875rem', fontWeight: 600 }}>
+        <div className="auth-footer-copyright">
           © 2026 {COMPANY_NAME}. All rights reserved.
         </div>
       </motion.section>
@@ -343,7 +310,6 @@ export function AuthShell({ onLogin }: { onLogin: (session: Session, remember: b
         initial={{ x: 20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.6 }}
-        style={{ flex: '0.8', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'white' }}
       >
         <div className="auth-form-container">
           {mode === "reset" ? (
@@ -360,12 +326,12 @@ export function AuthShell({ onLogin }: { onLogin: (session: Session, remember: b
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
               >
-                <header className="form-header" style={{ position: 'relative' }}>
+                <header className="form-header">
                   {busy && <AuthIndicator />}
-                  <h2 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#0f172a', marginBottom: '8px' }}>
+                  <h2>
                     {mode === "login" ? "Welcome Back" : mode === "signup" ? "Get Started" : "Verification"}
                   </h2>
-                  <p style={{ color: '#64748b', fontSize: '1rem' }}>
+                  <p>
                     {mode === "login" ? "Enter your vault credentials." : mode === "signup" ? "Create your account." : "Enter your 6-digit code."}
                   </p>
                 </header>
@@ -383,17 +349,17 @@ export function AuthShell({ onLogin }: { onLogin: (session: Session, remember: b
                     </Field>
                     
                     <div className="form-options">
-                      <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#64748b', fontSize: '0.875rem', fontWeight: 600 }}>
-                        <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} style={{ width: '18px', height: '18px', accentColor: '#3b82f6' }} />
+                      <label className="checkbox-label">
+                        <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
                         <span>Remember me</span>
                       </label>
-                      <button type="button" className="link" onClick={() => setMode("reset")} style={{ color: '#3b82f6', fontWeight: 800, fontSize: '0.875rem' }}>Forgot password?</button>
+                      <button type="button" className="link" onClick={() => setMode("reset")}>Forgot password?</button>
                     </div>
 
                     <motion.button className="primary-btn" disabled={busy} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>Unlock Vault <ChevronRight size={20} /></motion.button>
-                    <div className="auth-footer-nav" style={{ marginTop: '32px', textAlign: 'center', color: '#64748b', fontSize: '0.9375rem' }}>
+                    <div className="auth-footer-nav">
                       <span>Need a vault?</span>
-                      <button type="button" onClick={() => setMode("signup")} style={{ color: '#3b82f6', fontWeight: 800, marginLeft: '8px' }}>Register</button>
+                      <button type="button" onClick={() => setMode("signup")}>Register</button>
                     </div>
                   </form>
                 )}
@@ -416,9 +382,9 @@ export function AuthShell({ onLogin }: { onLogin: (session: Session, remember: b
                       <input value={signup.confirmPassword} onChange={(e) => setSignup({ ...signup, confirmPassword: e.target.value })} type={showPassword ? "text" : "password"} placeholder="Confirm" />
                     </Field>
                     <motion.button className="primary-btn" disabled={busy} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>Create Account</motion.button>
-                    <div className="auth-footer-nav" style={{ marginTop: '32px', textAlign: 'center', color: '#64748b', fontSize: '0.9375rem' }}>
+                    <div className="auth-footer-nav">
                       <span>Member?</span>
-                      <button type="button" onClick={() => setMode("login")} style={{ color: '#3b82f6', fontWeight: 800, marginLeft: '8px' }}>Sign In</button>
+                      <button type="button" onClick={() => setMode("login")}>Sign In</button>
                     </div>
                   </form>
                 )}
@@ -426,8 +392,8 @@ export function AuthShell({ onLogin }: { onLogin: (session: Session, remember: b
                 {(mode === "verify" || mode === "mfa") && (
                   <form onSubmit={mode === "verify" ? submitVerify : submitLogin}>
                     {mode === "verify" && totpData && (
-                      <div style={{ background: 'white', padding: '24px', borderRadius: '32px', marginBottom: '24px', textAlign: 'center', border: '1px solid #f1f5f9', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', position: 'relative', minHeight: '230px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{ position: 'relative', width: '180px', height: '180px', marginBottom: '16px' }}>
+                      <div className="qr-container">
+                        <div className="qr-image-wrapper">
                           {/* Image Loader */}
                           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', borderRadius: '16px', zIndex: 1 }}>
                             <AuthIndicator />
@@ -462,14 +428,14 @@ export function AuthShell({ onLogin }: { onLogin: (session: Session, remember: b
                         placeholder="······" 
                         maxLength={6}
                         autoFocus
-                        style={{ textAlign: 'center', fontSize: '2rem', letterSpacing: '0.4em', fontFamily: 'monospace', fontWeight: 900 }}
+                        className="otp-input"
                       />
                     </Field>
                     <motion.button className="primary-btn" disabled={busy} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
                       {mode === "verify" ? "Link Authenticator" : "Verify & Sign In"}
                     </motion.button>
-                    <div className="auth-footer-nav" style={{ marginTop: '24px', textAlign: 'center' }}>
-                      <button type="button" onClick={() => setMode(mode === "verify" ? "signup" : "login")} style={{ color: '#3b82f6', fontWeight: 800, fontSize: '0.875rem' }}>
+                    <div className="auth-footer-nav">
+                      <button type="button" onClick={() => setMode(mode === "verify" ? "signup" : "login")}>
                         {mode === "verify" ? "Back to Signup" : "Back to Credentials"}
                       </button>
                     </div>
@@ -481,5 +447,6 @@ export function AuthShell({ onLogin }: { onLogin: (session: Session, remember: b
         </div>
       </motion.section>
     </main>
+
   );
 }
