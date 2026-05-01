@@ -5,7 +5,7 @@ compatibility_date = "2026-04-29"
 [vars]
 APP_BASE_URL = "https://aged-hill-1a6e.tamminanabhogesh.workers.dev"
 ALLOWED_ORIGINS = "*"
-MAX_FILE_SIZE_BYTES = "5242880"
+MAX_FILE_SIZE_BYTES = "104857600"
 
 [[d1_databases]]
 binding = "DB"
