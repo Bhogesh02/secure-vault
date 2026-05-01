@@ -921,39 +921,41 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                       </div>
                     ) : viewMode === "grid" ? (
                       <>
-                        {/* Folders (only in root of vault) */}
                         {activeTab === "vault" && currentFolderId === 0 && filteredFolders.length > 0 && (
-                          <div className="file-grid" style={{marginBottom: '40px'}}>
-                            {filteredFolders.map(folder => (
-                              <motion.div 
-                                key={folder.id} 
-                                variants={itemVariants}
-                                className="grid-item" 
-                                onClick={() => handleFolderClick(folder)}
-                                whileHover={{ y: -6 }}
-                              >
-                                <div className="preview-canvas">
-                                  <FolderIcon size={48} color={folder.is_locked ? "#6366f1" : "#3b82f6"} fill={folder.is_locked ? "rgba(99, 102, 241, 0.1)" : "rgba(59, 130, 246, 0.1)"} />
-                                  {folder.is_locked && (
-                                    <div className="sec-badge" style={{opacity: 1, transform: 'none', background: '#6366f1'}}>
-                                      <Lock size={12} /> Encrypted
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="item-meta">
-                                  <div className="text-content">
-                                    <h4>{folder.name}</h4>
-                                    <span>{formatBytes(folder.total_size || 0)} • Vault</span>
+                          <>
+                            <p className="section-label">Folders</p>
+                            <div className="file-grid" style={{marginBottom: '32px'}}>
+                              {filteredFolders.map(folder => (
+                                <motion.div 
+                                  key={folder.id} 
+                                  variants={itemVariants}
+                                  className={`grid-item folder-card${folder.is_locked ? ' locked-folder' : ''}`}
+                                  onClick={() => handleFolderClick(folder)}
+                                >
+                                  <div className="preview-canvas">
+                                    <FolderIcon size={44} color={folder.is_locked ? "#7c3aed" : "#2563eb"} strokeWidth={1.5} />
+                                    {folder.is_locked && (
+                                      <div className="sec-badge">
+                                        <Lock size={10} /> Locked
+                                      </div>
+                                    )}
                                   </div>
-                                </div>
-                                <div className="quick-actions">
-                                  <button className="delete-btn" disabled={isBusy} onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id); }}><Trash2 size={16} /></button>
-                                </div>
-                              </motion.div>
-                            ))}
-                          </div>
+                                  <div className="item-meta">
+                                    <div className="text-content">
+                                      <h4>{folder.name}</h4>
+                                      <span>{formatBytes(folder.total_size || 0)}</span>
+                                    </div>
+                                  </div>
+                                  <div className="quick-actions">
+                                    <button className="delete-btn" disabled={isBusy} onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id); }}><Trash2 size={15} /></button>
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </div>
+                          </>
                         )}
 
+                        {filteredFiles.length > 0 && <p className="section-label">Files</p>}
                         <div className="file-grid">
                           {filteredFiles.map(file => {
                             let daysLeft = 0;
@@ -971,20 +973,18 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                                 <div className="preview-canvas" onClick={() => handleViewFile(file)} style={{ background: !file.encryption_salt && file.content_type ? getFileCategoryStyle(getFileCategory(file.content_type)).bg : undefined }}>
                                   {file.encryption_salt ? (
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                      <Shield size={44} color="#6366f1" fill="rgba(99,102,241,0.08)" />
-                                      <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#6366f1', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Encrypted</span>
+                                      <Shield size={40} color="#6366f1" strokeWidth={1.5} />
+                                      <span style={{ fontSize: '0.6rem', fontWeight: 800, color: '#6366f1', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Encrypted</span>
                                     </div>
                                   ) : (
                                     <FileCategoryIcon 
                                       category={getFileCategory(file.content_type || '')} 
-                                      size={44} 
+                                      size={40} 
                                       color={getFileCategoryStyle(getFileCategory(file.content_type || '')).color} 
                                     />
                                   )}
-                                  <div style={{ position: 'absolute', bottom: '12px', left: '12px' }}>
-                                    <span style={{ background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(8px)', color: '#fff', fontSize: '0.6rem', fontWeight: 800, padding: '3px 8px', borderRadius: '6px', letterSpacing: '0.05em' }}>
-                                      {getFileExtension(file.filename)}
-                                    </span>
+                                  <div className="ext-badge">
+                                    {getFileExtension(file.filename)}
                                   </div>
                                   {activeTab === "bin" && (
                                     <div className="sec-badge" style={{opacity: 1, transform: 'none', background: '#ef4444', right: '12px', left: 'auto', border: 'none'}}>
