@@ -301,8 +301,7 @@ export function AuthShell({ onLogin }: { onLogin: (session: Session, remember: b
         </div>
 
         <div className="auth-footer-copyright">
-          © 2026 {COMPANY_NAME}. All rights reserved.
-        </div>
+© 2026 BlindLock • Built by Bhogesh Tamminana        </div>
       </motion.section>
 
       <motion.section 
