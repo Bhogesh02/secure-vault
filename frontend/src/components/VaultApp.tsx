@@ -1,17 +1,17 @@
 import React, { useState, useMemo } from "react";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
-import { 
-  Folder as FolderIcon, 
-  Search, 
-  Plus, 
-  MoreVertical, 
-  Trash2, 
-  Download, 
-  Share2, 
-  LogOut, 
-  Shield, 
-  Clock, 
+import {
+  Folder as FolderIcon,
+  Search,
+  Plus,
+  MoreVertical,
+  Trash2,
+  Download,
+  Share2,
+  LogOut,
+  Shield,
+  Clock,
   HardDrive,
   ChevronRight,
   Menu,
@@ -44,6 +44,7 @@ import {
 import { useToast } from "./Toast";
 import { Modal } from "./Modal";
 import { Field } from "./Field";
+import { Stat } from "./Stat";
 import { Session, VaultFile, Folder as VaultFolder } from "../types/domain";
 import { fileApi } from "../lib/api/files";
 import { securityApi, shareApi } from "../lib/api/security";
@@ -63,9 +64,9 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.95 },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
+  visible: {
+    opacity: 1,
+    y: 0,
     scale: 1,
     transition: { type: "spring", stiffness: 300, damping: 25 }
   }
@@ -125,24 +126,24 @@ function getFileCategory(contentType: string): FileCategory {
 
 function getFileCategoryStyle(category: FileCategory): { bg: string; color: string } {
   const styles: Record<FileCategory, { bg: string; color: string }> = {
-    image:   { bg: 'rgba(59, 130, 246, 0.08)',  color: '#3b82f6' },
-    video:   { bg: 'rgba(139, 92, 246, 0.08)',  color: '#8b5cf6' },
-    audio:   { bg: 'rgba(20, 184, 166, 0.08)',  color: '#14b8a6' },
-    pdf:     { bg: 'rgba(239, 68, 68, 0.08)',   color: '#ef4444' },
-    archive: { bg: 'rgba(245, 158, 11, 0.08)',  color: '#f59e0b' },
-    other:   { bg: 'rgba(148, 163, 184, 0.08)', color: '#94a3b8' },
+    image: { bg: 'rgba(59, 130, 246, 0.08)', color: '#3b82f6' },
+    video: { bg: 'rgba(139, 92, 246, 0.08)', color: '#8b5cf6' },
+    audio: { bg: 'rgba(20, 184, 166, 0.08)', color: '#14b8a6' },
+    pdf: { bg: 'rgba(239, 68, 68, 0.08)', color: '#ef4444' },
+    archive: { bg: 'rgba(245, 158, 11, 0.08)', color: '#f59e0b' },
+    other: { bg: 'rgba(148, 163, 184, 0.08)', color: '#94a3b8' },
   };
   return styles[category];
 }
 
 function FileCategoryIcon({ category, size = 48, color }: { category: FileCategory; size?: number; color: string }) {
   switch (category) {
-    case 'image':   return <FileImage size={size} color={color} />;
-    case 'video':   return <Video     size={size} color={color} />;
-    case 'audio':   return <Music     size={size} color={color} />;
-    case 'pdf':     return <FileText  size={size} color={color} />;
+    case 'image': return <FileImage size={size} color={color} />;
+    case 'video': return <Video size={size} color={color} />;
+    case 'audio': return <Music size={size} color={color} />;
+    case 'pdf': return <FileText size={size} color={color} />;
     case 'archive': return <FileArchive size={size} color={color} />;
-    default:        return <FileGeneric size={size} color={color} />;
+    default: return <FileGeneric size={size} color={color} />;
   }
 }
 
@@ -157,34 +158,34 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [activeTab, setActiveTab] = useState<"vault" | "shared" | "bin" | "security">("vault");
-  
+
   React.useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 1024);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  
+
   const [securityLogs, setSecurityLogs] = useState<any[]>([]);
   const [securitySettings, setSecuritySettings] = useState<any>(null);
   const [isSecurityLoading, setIsSecurityLoading] = useState(false);
-  
+
   const [showShareModal, setShowShareModal] = useState(false);
   const [sharingItem, setSharingItem] = useState<{ id: number; name: string; type: 'file' | 'folder' } | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
-  
+
   const [currentFolderId, setCurrentFolderId] = useState<number>(0);
   const [activeFolderPassword, setActiveFolderPassword] = useState<string>("");
-  
+
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  
+
   const [previewFile, setPreviewFile] = useState<{ name: string; url: string; size: number; contentType: string } | null>(null);
   const [pendingFolderId, setPendingFolderId] = useState<number | null>(null);
   const [uploadProgress, setUploadProgress] = useState<{ status: string; percent: number } | null>(null);
-  
+
   const [newFolderName, setNewFolderName] = useState("");
   const [newFolderPassword, setNewFolderPassword] = useState("");
   const [unlockPassword, setUnlockPassword] = useState("");
@@ -192,23 +193,23 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
   const [showPassUnlock, setShowPassUnlock] = useState(false);
   const [folderNameError, setFolderNameError] = useState("");
   const [unlockError, setUnlockError] = useState("");
-  
+
   const { showToast } = useToast();
 
-  const { 
-    folders, 
-    files, 
-    stats, 
-    isLoading, 
-    isError, 
-    createFolder, 
-    uploadFile, 
-    deleteFile, 
+  const {
+    folders,
+    files,
+    stats,
+    isLoading,
+    isError,
+    createFolder,
+    uploadFile,
+    deleteFile,
     purgeFile,
     restoreFile,
     deleteFolder,
     unlockFolder,
-    isBusy 
+    isBusy
   } = useVault(session, currentFolderId, activeFolderPassword, activeTab !== "vault" && activeTab !== "security" ? activeTab : undefined);
 
   const fetchSecurityData = async () => {
@@ -243,12 +244,12 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
     try {
       const urlResponse = await fileApi.createDownloadUrl(session.accessToken, file.id, activeFolderPassword);
       const blob = await fileApi.downloadBlob(urlResponse.data.download_url);
-      
+
       let finalBlob = blob;
       if (file.encryption_salt && file.encryption_iv && activeFolderPassword) {
         finalBlob = await decryptFile(blob, activeFolderPassword, file.encryption_salt, file.encryption_iv, file.content_type);
       }
-      
+
       const url = URL.createObjectURL(finalBlob);
       setPreviewFile({ name: file.filename, url, size: file.size, contentType: file.content_type || '' });
       setShowPreviewModal(true);
@@ -262,7 +263,7 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
     try {
       const urlResponse = await fileApi.createDownloadUrl(session.accessToken, file.id, activeFolderPassword);
       const blob = await fileApi.downloadBlob(urlResponse.data.download_url);
-      
+
       let finalBlob = blob;
       if (file.encryption_salt && file.encryption_iv && activeFolderPassword) {
         finalBlob = await decryptFile(blob, activeFolderPassword, file.encryption_salt, file.encryption_iv, file.content_type);
@@ -359,9 +360,9 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
       const updateFileProgress = (p: number) => {
         const basePercent = Math.round((i / total) * 100);
         const chunkWeight = (1 / total) * p;
-        setUploadProgress({ 
-          status: `Securing ${file.name}${total > 1 ? ` (${i + 1}/${total})` : ''}...`, 
-          percent: Math.min(99, Math.round(basePercent + chunkWeight)) 
+        setUploadProgress({
+          status: `Securing ${file.name}${total > 1 ? ` (${i + 1}/${total})` : ''}...`,
+          percent: Math.min(99, Math.round(basePercent + chunkWeight))
         });
       };
 
@@ -377,10 +378,10 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
           encryptionMetadata = { salt: encrypted.salt, iv: encrypted.iv };
         }
 
-        await uploadFile({ 
-          folderId: currentFolderId, 
-          file: finalPayload, 
-          password: activeFolderPassword, 
+        await uploadFile({
+          folderId: currentFolderId,
+          file: finalPayload,
+          password: activeFolderPassword,
           metadata: encryptionMetadata,
           onProgress: (p) => updateFileProgress(p)
         });
@@ -464,7 +465,7 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
   async function handleShare(e: React.FormEvent) {
     e.preventDefault();
     if (!sharingItem) return;
-    
+
     const formData = new FormData(e.currentTarget as HTMLFormElement);
     const expiresMinutes = parseInt(formData.get("expires") as string) || 60;
     const isOneTime = formData.get("one-time") === "on";
@@ -472,7 +473,7 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
 
     try {
       let wrappedKey: string | undefined = undefined;
-      
+
       if (requireSharePassword && sharePassword) {
         if (activeFolderPassword) {
           wrappedKey = await wrapKey(activeFolderPassword, sharePassword);
@@ -488,15 +489,15 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
         password: requireSharePassword ? sharePassword : undefined,
         wrappedKey
       });
-      
+
       if (res.success) {
         let fullUrl = `${window.location.origin}/#/share/${res.data.token}`;
-        
+
         if (!requireSharePassword && activeFolderPassword) {
           const encodedKey = btoa(activeFolderPassword);
           fullUrl += `?k=${encodedKey}`;
         }
-        
+
         setShareLink(fullUrl);
         showToast("success", "Encrypted sharing link generated");
       }
@@ -523,7 +524,7 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
       <LayoutGroup>
         <AnimatePresence>
           {isMobileMenuOpen && (
-            <motion.div 
+            <motion.div
               className="mobile-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -532,29 +533,29 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
             />
           )}
         </AnimatePresence>
-        <motion.aside 
+        <motion.aside
           className={`vault-sidebar ${isSidebarCollapsed || isMobile ? 'collapsed' : ''} ${isMobileMenuOpen ? 'mobile-open' : ''}`}
           initial={false}
-          animate={{ 
+          animate={{
             width: isMobile ? (isMobileMenuOpen ? 260 : 70) : (isSidebarCollapsed ? 90 : 280),
-            x: 0 
+            x: 0
           }}
           transition={{ type: "spring", stiffness: 350, damping: 35 }}
         >
           <div className="sidebar-header">
             <motion.div className="brand-lockup" layout>
               <div className="nav-icon logo-wrapper" style={{ padding: '0' }}>
-                <motion.img 
-                  src="/favicon.png" 
-                  alt={APP_NAME} 
+                <motion.img
+                  src="/favicon.png"
+                  alt={APP_NAME}
                   style={{ width: '32px', height: '32px', borderRadius: '8px' }}
-                  whileHover={{ rotate: 5, scale: 1.05 }} 
-                  layout 
+                  whileHover={{ rotate: 5, scale: 1.05 }}
+                  layout
                 />
               </div>
               <AnimatePresence mode="wait">
                 {!isSidebarCollapsed && (
-                  <motion.div 
+                  <motion.div
                     className="brand-info"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -570,13 +571,13 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
           </div>
 
           <nav className="sidebar-nav">
-            <motion.div 
-              className={`nav-item ${activeTab === 'vault' && currentFolderId === 0 ? 'active' : ''}`} 
-              onClick={() => { 
-                setActiveTab("vault"); 
-                setCurrentFolderId(0); 
-                setActiveFolderPassword(""); 
-                if (window.innerWidth <= 1024) setIsMobileMenuOpen(false); 
+            <motion.div
+              className={`nav-item ${activeTab === 'vault' && currentFolderId === 0 ? 'active' : ''}`}
+              onClick={() => {
+                setActiveTab("vault");
+                setCurrentFolderId(0);
+                setActiveFolderPassword("");
+                if (window.innerWidth <= 1024) setIsMobileMenuOpen(false);
               }}
               whileTap={{ scale: 0.98 }}
               layout
@@ -588,10 +589,10 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                 </motion.span>
               )}
             </motion.div>
-            
-            
-            <motion.div 
-              className={`nav-item ${activeTab === 'shared' ? 'active' : ''}`} 
+
+
+            <motion.div
+              className={`nav-item ${activeTab === 'shared' ? 'active' : ''}`}
               onClick={() => {
                 setActiveTab("shared");
                 if (window.innerWidth <= 1024) setIsMobileMenuOpen(false);
@@ -602,8 +603,8 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
               {!isSidebarCollapsed && <span>Shared</span>}
             </motion.div>
 
-            <motion.div 
-              className={`nav-item ${activeTab === 'security' ? 'active' : ''}`} 
+            <motion.div
+              className={`nav-item ${activeTab === 'security' ? 'active' : ''}`}
               onClick={() => {
                 setActiveTab("security");
                 if (window.innerWidth <= 1024) setIsMobileMenuOpen(false);
@@ -613,9 +614,9 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
               <div className="nav-icon"><ShieldCheck size={20} /></div>
               {!isSidebarCollapsed && <span>Security Audit</span>}
             </motion.div>
-            
-            <motion.div 
-              className={`nav-item ${activeTab === 'bin' ? 'active' : ''}`} 
+
+            <motion.div
+              className={`nav-item ${activeTab === 'bin' ? 'active' : ''}`}
               onClick={() => {
                 setActiveTab("bin");
                 if (window.innerWidth <= 1024) setIsMobileMenuOpen(false);
@@ -632,7 +633,7 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
               <div className="nav-icon usage-icon-wrapper">
                 <HardDrive size={20} />
                 {isSidebarCollapsed && (
-                  <motion.span 
+                  <motion.span
                     className="percent-overlay"
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -644,18 +645,25 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
               {!isSidebarCollapsed && (
                 <motion.div className="usage-details-box" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <div className="usage-stats">
-                    <span>{stats ? formatBytes(stats.total_size) : '...'} used</span>
-                    <span>{usagePercent}%</span>
+                    <span className="used-text">
+                      <strong>{stats ? formatBytes(stats.total_size) : '...'}</strong> of {stats ? formatBytes(stats.storage_limit) : '2 GB'} used
+                    </span>
+                    <span className="usage-percent">{usagePercent}%</span>
                   </div>
                   <div className="usage-bar-mini">
-                    <motion.div className="usage-fill" animate={{ width: `${usagePercent}%` }} />
+                    <motion.div 
+                      className="usage-fill" 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${usagePercent}%` }} 
+                      transition={{ duration: 1, ease: "easeOut" }}
+                    />
                   </div>
                 </motion.div>
               )}
             </motion.div>
 
-            <motion.button 
-              className="logout-btn" 
+            <motion.button
+              className="logout-btn"
               onClick={() => setShowLogoutModal(true)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -672,8 +680,8 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
       <main className="vault-main">
         <header className="main-header">
           <div className="header-left">
-            <motion.button 
-              className="sidebar-toggle" 
+            <motion.button
+              className="sidebar-toggle"
               onClick={() => {
                 if (isMobile) {
                   setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -696,9 +704,9 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
               <button onClick={() => { setActiveTab("vault"); setCurrentFolderId(0); setActiveFolderPassword(""); }}>Vault</button>
               <AnimatePresence>
                 {activeTab !== "vault" ? (
-                  <motion.span 
-                    initial={{ opacity: 0, x: -5 }} 
-                    animate={{ opacity: 1, x: 0 }} 
+                  <motion.span
+                    initial={{ opacity: 0, x: -5 }}
+                    animate={{ opacity: 1, x: 0 }}
                     className="flex items-center gap-2"
                     style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                   >
@@ -706,9 +714,9 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                     <button className="active-path">{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}</button>
                   </motion.span>
                 ) : currentFolderId !== 0 ? (
-                  <motion.span 
-                    initial={{ opacity: 0, x: -5 }} 
-                    animate={{ opacity: 1, x: 0 }} 
+                  <motion.span
+                    initial={{ opacity: 0, x: -5 }}
+                    animate={{ opacity: 1, x: 0 }}
                     className="flex items-center gap-2"
                     style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                   >
@@ -727,11 +735,18 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                 <input type="text" placeholder={`Search ${activeTab === 'vault' ? 'your vault' : activeTab}...`} value={search} onChange={(e) => setSearch(e.target.value)} />
               </motion.div>
             )}
-            
+
             {activeTab === "vault" && (
               <div className="action-buttons">
+                <div className="header-stats-wrapper">
+                  <Stat 
+                    label="Storage Usage"
+                    value={stats ? `${formatBytes(stats.total_size)} / ${formatBytes(stats.storage_limit)}` : '...'}
+                    icon={<HardDrive size={16} />}
+                  />
+                </div>
                 {currentFolderId === 0 ? (
-                  <motion.button 
+                  <motion.button
                     className="upload-trigger"
                     style={{ border: 'none', fontFamily: 'inherit' }}
                     onClick={() => setShowFolderModal(true)}
@@ -742,7 +757,7 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                     <span>Create Folder</span>
                   </motion.button>
                 ) : (
-                  <motion.label 
+                  <motion.label
                     className="upload-trigger"
                     whileHover={{ y: -2 }}
                     whileTap={{ scale: 0.95 }}
@@ -761,7 +776,7 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
           {(activeTab === "vault" || activeTab === "bin" || activeTab === "shared") && (
             <div className="view-header">
               <div className="title-block">
-                <motion.h1 
+                <motion.h1
                   key={activeTab === 'vault' ? currentFolderId : activeTab}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -769,11 +784,11 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                   {currentFolderName}
                 </motion.h1>
                 <p>
-                  {activeTab === "bin" 
-                    ? `${filteredFiles.length} items queued for deletion` 
-                    : activeTab === "shared" 
-                    ? "Collaborative items" 
-                    : `${filteredFiles.length + (currentFolderId === 0 && activeTab === "vault" ? filteredFolders.length : 0)} items secured`}
+                  {activeTab === "bin"
+                    ? `${filteredFiles.length} items queued for deletion`
+                    : activeTab === "shared"
+                      ? "Collaborative items"
+                      : `${filteredFiles.length + (currentFolderId === 0 && activeTab === "vault" ? filteredFolders.length : 0)} items secured`}
                 </p>
               </div>
               <div className="view-toggles">
@@ -793,15 +808,15 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
             <SkeletonTheme baseColor="#f1f5f9" highlightColor="#f8fafc">
               <AnimatePresence mode="wait">
                 {isLoading ? (
-                  <motion.div 
+                  <motion.div
                     key="loading"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className={viewMode === "grid" ? "file-grid" : "list-view-container"}
                   >
-                    {[1,2,3,4,5,6].map(i => (
-                      <div key={i} style={{padding: '20px'}}><Skeleton height={viewMode === "grid" ? 180 : 60} borderRadius={20} /></div>
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                      <div key={i} style={{ padding: '20px' }}><Skeleton height={viewMode === "grid" ? 180 : 60} borderRadius={20} /></div>
                     ))}
                   </motion.div>
                 ) : (
@@ -828,8 +843,8 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                               <div className="field-group">
                                 <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Trusted Email</label>
-                                <input 
-                                  type="email" 
+                                <input
+                                  type="email"
                                   placeholder="e.g. partner@email.com"
                                   defaultValue={securitySettings?.dead_man_email}
                                   onBlur={(e) => handleUpdateSecuritySettings({ dead_man_email: e.target.value })}
@@ -852,7 +867,7 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                             </p>
                             <div className="field-group">
                               <label style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Max Failed Attempts</label>
-                              <select 
+                              <select
                                 defaultValue={securitySettings?.max_failed_attempts || 5}
                                 onChange={(e) => handleUpdateSecuritySettings({ max_failed_attempts: parseInt(e.target.value) })}
                                 style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '0.9375rem' }}
@@ -876,23 +891,23 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                               <RefreshCcw size={16} />
                             </button>
                           </div>
-                          
+
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
                             {securityLogs.length === 0 ? (
                               <p style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>No security events logged yet.</p>
                             ) : (
                               securityLogs.map((log, idx) => (
-                                <div key={idx} style={{ 
-                                  display: 'flex', 
-                                  gap: '20px', 
-                                  padding: '16px 0', 
-                                  borderBottom: idx === securityLogs.length - 1 ? 'none' : '1px solid #f1f5f9' 
+                                <div key={idx} style={{
+                                  display: 'flex',
+                                  gap: '20px',
+                                  padding: '16px 0',
+                                  borderBottom: idx === securityLogs.length - 1 ? 'none' : '1px solid #f1f5f9'
                                 }}>
                                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                    <div style={{ 
-                                      width: '12px', 
-                                      height: '12px', 
-                                      borderRadius: '50%', 
+                                    <div style={{
+                                      width: '12px',
+                                      height: '12px',
+                                      borderRadius: '50%',
                                       background: log.event_type.includes('failed') ? '#ef4444' : '#10b981',
                                       marginTop: '6px'
                                     }} />
@@ -924,10 +939,10 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                         {activeTab === "vault" && currentFolderId === 0 && filteredFolders.length > 0 && (
                           <>
                             <p className="section-label">Folders</p>
-                            <div className="file-grid" style={{marginBottom: '32px'}}>
+                            <div className="file-grid" style={{ marginBottom: '32px' }}>
                               {filteredFolders.map(folder => (
-                                <motion.div 
-                                  key={folder.id} 
+                                <motion.div
+                                  key={folder.id}
                                   variants={itemVariants}
                                   className={`grid-item folder-card${folder.is_locked ? ' locked-folder' : ''}`}
                                   onClick={() => handleFolderClick(folder)}
@@ -964,8 +979,8 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                               daysLeft = 15 - Math.floor((Date.now() - deletedDate) / (1000 * 60 * 60 * 24));
                             }
                             return (
-                              <motion.div 
-                                key={file.id} 
+                              <motion.div
+                                key={file.id}
                                 variants={itemVariants}
                                 layoutId={String(file.id)}
                                 className="grid-item"
@@ -977,17 +992,17 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                                       <span style={{ fontSize: '0.6rem', fontWeight: 800, color: '#6366f1', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Encrypted</span>
                                     </div>
                                   ) : (
-                                    <FileCategoryIcon 
-                                      category={getFileCategory(file.content_type || '')} 
-                                      size={40} 
-                                      color={getFileCategoryStyle(getFileCategory(file.content_type || '')).color} 
+                                    <FileCategoryIcon
+                                      category={getFileCategory(file.content_type || '')}
+                                      size={40}
+                                      color={getFileCategoryStyle(getFileCategory(file.content_type || '')).color}
                                     />
                                   )}
                                   <div className="ext-badge">
                                     {getFileExtension(file.filename)}
                                   </div>
                                   {activeTab === "bin" && (
-                                    <div className="sec-badge" style={{opacity: 1, transform: 'none', background: '#ef4444', right: '12px', left: 'auto', border: 'none'}}>
+                                    <div className="sec-badge" style={{ opacity: 1, transform: 'none', background: '#ef4444', right: '12px', left: 'auto', border: 'none' }}>
                                       {daysLeft > 0 ? `${daysLeft}d left` : "Pending purge"}
                                     </div>
                                   )}
@@ -1004,8 +1019,8 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                                     <>
                                       <button disabled={isBusy} onClick={(e) => { e.stopPropagation(); handleDownload(file); }} title="Download"><Download size={16} /></button>
                                       <button disabled={isBusy} onClick={(e) => { e.stopPropagation(); handleViewFile(file); }} title="Preview"><Maximize2 size={16} /></button>
-                                      <button disabled={isBusy} onClick={(e) => { 
-                                        e.stopPropagation(); 
+                                      <button disabled={isBusy} onClick={(e) => {
+                                        e.stopPropagation();
                                         setSharingItem({ id: file.id, name: file.filename, type: 'file' });
                                         setShareLink(null);
                                         setShowShareModal(true);
@@ -1013,10 +1028,10 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                                       <button className="delete-btn" disabled={isBusy} onClick={(e) => { e.stopPropagation(); handleDeleteFile(file.id); }} title="Delete"><Trash2 size={16} /></button>
                                     </>
                                   ) : (
-                                    <div style={{display: 'flex', width: '100%'}}>
-                                      <button style={{flex: 1, borderRight: '1px solid rgba(255,255,255,0.1)'}} disabled={isBusy} onClick={(e) => { e.stopPropagation(); handleViewFile(file); }}><Maximize2 size={16} /></button>
-                                      <button style={{flex: 1, borderRight: '1px solid rgba(255,255,255,0.1)'}} disabled={isBusy} onClick={(e) => { e.stopPropagation(); handleRestoreFile(file.id); }}><RefreshCcw size={16} /></button>
-                                      <button className="delete-btn" disabled={isBusy} style={{flex: 1}} onClick={(e) => { e.stopPropagation(); handlePurgeFile(file.id); }}><Trash2 size={16} /></button>
+                                    <div style={{ display: 'flex', width: '100%' }}>
+                                      <button style={{ flex: 1, borderRight: '1px solid rgba(255,255,255,0.1)' }} disabled={isBusy} onClick={(e) => { e.stopPropagation(); handleViewFile(file); }}><Maximize2 size={16} /></button>
+                                      <button style={{ flex: 1, borderRight: '1px solid rgba(255,255,255,0.1)' }} disabled={isBusy} onClick={(e) => { e.stopPropagation(); handleRestoreFile(file.id); }}><RefreshCcw size={16} /></button>
+                                      <button className="delete-btn" disabled={isBusy} style={{ flex: 1 }} onClick={(e) => { e.stopPropagation(); handlePurgeFile(file.id); }}><Trash2 size={16} /></button>
                                     </div>
                                   )}
                                 </div>
@@ -1031,21 +1046,21 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                           <div>Name</div>
                           <div>Size</div>
                           <div>Date</div>
-                          <div style={{textAlign: 'right'}}>Actions</div>
+                          <div style={{ textAlign: 'right' }}>Actions</div>
                         </div>
                         <div className="list-body">
                           {/* Folders first in List View */}
                           {activeTab === "vault" && currentFolderId === 0 && filteredFolders.map(folder => (
-                            <motion.div 
-                              key={folder.id} 
+                            <motion.div
+                              key={folder.id}
                               variants={itemVariants}
-                              className="row" 
+                              className="row"
                               onClick={() => handleFolderClick(folder)}
                             >
                               <div className="col-name">
                                 <FolderIcon size={18} color={folder.is_locked ? "#6366f1" : "#3b82f6"} />
                                 {folder.name}
-                                {folder.is_locked && <Lock size={12} style={{marginLeft: '4px', opacity: 0.6}} />}
+                                {folder.is_locked && <Lock size={12} style={{ marginLeft: '4px', opacity: 0.6 }} />}
                               </div>
                               <div className="col-size">{formatBytes(folder.total_size || 0)}</div>
                               <div className="col-date">{folder.created_at ? new Date(folder.created_at).toLocaleDateString() : '--'}</div>
@@ -1061,10 +1076,10 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                               daysLeft = 15 - Math.floor((Date.now() - deletedDate) / (1000 * 60 * 60 * 24));
                             }
                             return (
-                              <motion.div 
-                                key={file.id} 
+                              <motion.div
+                                key={file.id}
                                 variants={itemVariants}
-                                className="row" 
+                                className="row"
                                 onClick={() => handleViewFile(file)}
                               >
                                 <div className="col-name">
@@ -1074,14 +1089,14 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                                     <FileText size={18} color="#94a3b8" />
                                   )}
                                   {file.filename}
-                                  {!file.encryption_salt && <ShieldAlert size={12} style={{marginLeft: '6px', color: '#f59e0b', opacity: 0.7}} />}
+                                  {!file.encryption_salt && <ShieldAlert size={12} style={{ marginLeft: '6px', color: '#f59e0b', opacity: 0.7 }} />}
                                 </div>
                                 <div className="col-size">{formatBytes(file.size)}</div>
                                 <div className="col-date">{new Date(file.created_at).toLocaleDateString()}</div>
                                 <div className="col-actions">
                                   {activeTab === "bin" ? (
-                                    <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                                      <span style={{fontSize: '0.7rem', color: '#ef4444', fontWeight: 800, marginRight: '4px'}}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <span style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 800, marginRight: '4px' }}>
                                         {daysLeft > 0 ? `${daysLeft} days left` : "Pending purge"}
                                       </span>
                                       <button className="icon-btn" disabled={isBusy} onClick={(e) => { e.stopPropagation(); handleViewFile(file); }}><Maximize2 size={16} /></button>
@@ -1103,13 +1118,13 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                     )}
 
                     {filteredFiles.length === 0 && filteredFolders.length === 0 && (
-                      <motion.div 
-                        initial={{ opacity: 0, scale: 0.95 }} 
-                        animate={{ opacity: 1, scale: 1 }} 
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
                         transition={{ type: "spring", stiffness: 300, damping: 25 }}
                         style={{
-                          textAlign: 'center', 
-                          padding: '80px 20px', 
+                          textAlign: 'center',
+                          padding: '80px 20px',
                           color: '#94a3b8',
                           display: 'flex',
                           flexDirection: 'column',
@@ -1132,31 +1147,31 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                           justifyContent: 'center',
                           marginBottom: '24px'
                         }}>
-                          <Cloud size={40} strokeWidth={2} style={{color: '#3b82f6'}} />
+                          <Cloud size={40} strokeWidth={2} style={{ color: '#3b82f6' }} />
                         </div>
                         <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1e293b', marginBottom: '8px' }}>
-                          {activeTab === 'bin' 
-                            ? 'Bin is empty' 
-                            : activeTab === 'shared' 
-                            ? 'No shared items' 
-                            : currentFolderId === 0 
-                            ? 'Your vault is empty' 
-                            : `${currentFolderName} is empty`}
+                          {activeTab === 'bin'
+                            ? 'Bin is empty'
+                            : activeTab === 'shared'
+                              ? 'No shared items'
+                              : currentFolderId === 0
+                                ? 'Your vault is empty'
+                                : `${currentFolderName} is empty`}
                         </h3>
                         <p style={{ maxWidth: '400px', margin: '0 auto 32px', lineHeight: 1.5, fontSize: '0.95rem' }}>
-                          {activeTab === 'bin' 
+                          {activeTab === 'bin'
                             ? 'Deleted files and folders will appear here.'
                             : activeTab === 'shared'
-                            ? 'Files shared with you will appear here.'
-                            : currentFolderId === 0
-                            ? 'Start organizing your digital assets. Create a folder first.'
-                            : 'This folder is empty. Upload your first file to secure it.'}
+                              ? 'Files shared with you will appear here.'
+                              : currentFolderId === 0
+                                ? 'Start organizing your digital assets. Create a folder first.'
+                                : 'This folder is empty. Upload your first file to secure it.'}
                         </p>
-                        
+
                         {activeTab === 'vault' && (
                           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
                             {currentFolderId === 0 ? (
-                              <motion.button 
+                              <motion.button
                                 className="upload-trigger"
                                 style={{ border: 'none', fontFamily: 'inherit' }}
                                 onClick={() => setShowFolderModal(true)}
@@ -1167,7 +1182,7 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                                 <span>Create Folder</span>
                               </motion.button>
                             ) : (
-                              <motion.label 
+                              <motion.label
                                 className="upload-trigger"
                                 style={{ fontFamily: 'inherit' }}
                                 whileHover={{ scale: 1.05 }}
@@ -1191,19 +1206,19 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
       </main>
 
       {/* Modals with AnimatePresence & Fixed Autofill */}
-      <Modal 
-        isOpen={showFolderModal} 
-        onClose={() => { setShowFolderModal(false); setFolderNameError(""); setNewFolderName(""); setNewFolderPassword(""); }} 
+      <Modal
+        isOpen={showFolderModal}
+        onClose={() => { setShowFolderModal(false); setFolderNameError(""); setNewFolderName(""); setNewFolderPassword(""); }}
         title="Create New Vault"
       >
         <form onSubmit={handleCreateFolder} autoComplete="off" noValidate>
           <Field label="Vault Name" icon={<FolderPlus size={18} />}>
-            <input 
-              type="text" 
+            <input
+              type="text"
               name="vault-name-field"
-              value={newFolderName} 
-              onChange={(e) => { setNewFolderName(e.target.value); if (folderNameError) setFolderNameError(""); }} 
-              placeholder="e.g. Personal Records" 
+              value={newFolderName}
+              onChange={(e) => { setNewFolderName(e.target.value); if (folderNameError) setFolderNameError(""); }}
+              placeholder="e.g. Personal Records"
               autoFocus
               autoComplete="off"
               style={folderNameError ? { borderColor: '#ef4444' } : {}}
@@ -1215,12 +1230,12 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
             )}
           </Field>
           <Field label="Access Password (Optional)" icon={<Lock size={18} />}>
-            <input 
-              type={showPassCreate ? "text" : "password"} 
+            <input
+              type={showPassCreate ? "text" : "password"}
               name="vault-secret-new"
-              value={newFolderPassword} 
-              onChange={(e) => setNewFolderPassword(e.target.value)} 
-              placeholder="Any key — e.g. 1234 or secret" 
+              value={newFolderPassword}
+              onChange={(e) => setNewFolderPassword(e.target.value)}
+              placeholder="Any key — e.g. 1234 or secret"
               autoComplete="new-password"
             />
             <button type="button" className="password-toggle" onClick={() => setShowPassCreate(!showPassCreate)}>{showPassCreate ? <EyeOff size={18} /> : <Eye size={18} />}</button>
@@ -1232,28 +1247,28 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
         </form>
       </Modal>
 
-      <Modal 
-        isOpen={showUnlockModal} 
+      <Modal
+        isOpen={showUnlockModal}
         onClose={() => { setShowUnlockModal(false); setUnlockError(""); setUnlockPassword(""); }}
-        title={<>Unlock <span style={{color: '#3b82f6'}}>{pendingFolderName}</span></>}
+        title={<>Unlock <span style={{ color: '#3b82f6' }}>{pendingFolderName}</span></>}
       >
         <form onSubmit={handleUnlock} autoComplete="off" noValidate>
           {/* Dummy field to trick aggressive browsers */}
-          <input type="text" style={{display:'none'}} />
-          <input type="password" style={{display:'none'}} />
-          
+          <input type="text" style={{ display: 'none' }} />
+          <input type="password" style={{ display: 'none' }} />
+
           <div style={{ padding: '0 0 20px', color: '#64748b', fontSize: '0.9375rem' }}>
             <p>This vault is restricted. Please enter your secondary decryption key to access the contents.</p>
           </div>
           <Field label="Decryption Key" icon={<Lock size={18} />}>
-            <div className="input-wrapper" style={{width: '100%'}}>
-              <input 
-                autoFocus 
-                type={showPassUnlock ? "text" : "password"} 
+            <div className="input-wrapper" style={{ width: '100%' }}>
+              <input
+                autoFocus
+                type={showPassUnlock ? "text" : "password"}
                 name="vault-unlock-key"
-                value={unlockPassword} 
-                onChange={(e) => { setUnlockPassword(e.target.value); if (unlockError) setUnlockError(""); }} 
-                placeholder="Enter key to unlock" 
+                value={unlockPassword}
+                onChange={(e) => { setUnlockPassword(e.target.value); if (unlockError) setUnlockError(""); }}
+                placeholder="Enter key to unlock"
                 style={{ width: '100%', ...(unlockError ? { borderColor: '#ef4444' } : {}) }}
                 autoComplete="off"
               />
@@ -1272,16 +1287,16 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
       <AnimatePresence>
         {showPreviewModal && (
           <Modal isOpen={showPreviewModal} onClose={() => { setShowPreviewModal(false); if (previewFile?.url) URL.revokeObjectURL(previewFile.url); }} title="Secure Preview">
-            <motion.div 
+            <motion.div
               className="media-preview-container"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
             >
               {previewFile?.url && (
                 previewFile.contentType.startsWith('video/') ? (
-                  <video 
-                    src={previewFile.url} 
-                    controls 
+                  <video
+                    src={previewFile.url}
+                    controls
                     style={{ width: '100%', maxHeight: '60vh', borderRadius: '12px', background: '#000' }}
                   />
                 ) : previewFile.contentType.startsWith('audio/') ? (
@@ -1300,8 +1315,8 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                 )
               )}
               <div className="preview-meta">
-                <p style={{color: '#0f172a'}}><strong>{previewFile?.name}</strong></p>
-                <p style={{color: '#64748b'}}>{formatBytes(previewFile?.size || 0)} • {previewFile?.contentType || 'Unknown'}</p>
+                <p style={{ color: '#0f172a' }}><strong>{previewFile?.name}</strong></p>
+                <p style={{ color: '#64748b' }}>{formatBytes(previewFile?.size || 0)} • {previewFile?.contentType || 'Unknown'}</p>
               </div>
               <button className="secondary-btn" onClick={() => setShowPreviewModal(false)}>Close Preview</button>
             </motion.div>
@@ -1311,7 +1326,7 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
 
       <AnimatePresence>
         {uploadProgress && (
-          <Modal isOpen={true} onClose={() => {}} title="Secure Upload">
+          <Modal isOpen={true} onClose={() => { }} title="Secure Upload">
             <div style={{ padding: '20px 0', textAlign: 'center' }}>
               <motion.div
                 animate={{ y: uploadProgress.percent < 100 ? [0, -10, 0] : 0 }}
@@ -1323,7 +1338,7 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                 {uploadProgress.status}
               </h3>
               <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '10px', overflow: 'hidden', margin: '24px 0 12px' }}>
-                <motion.div 
+                <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${uploadProgress.percent}%` }}
                   transition={{ type: "spring", stiffness: 100, damping: 20 }}
@@ -1396,12 +1411,12 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                 {/* Password protection */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                    <input 
-                      type="checkbox" 
-                      id="require-password" 
+                    <input
+                      type="checkbox"
+                      id="require-password"
                       checked={requireSharePassword}
                       onChange={(e) => setRequireSharePassword(e.target.checked)}
-                      style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0, accentColor: '#f59e0b' }} 
+                      style={{ width: '18px', height: '18px', marginTop: '2px', flexShrink: 0, accentColor: '#f59e0b' }}
                     />
                     <div>
                       <label htmlFor="require-password" style={{ fontSize: '0.9375rem', fontWeight: 700, color: '#b45309', cursor: 'pointer', display: 'block', marginBottom: '4px' }}>
@@ -1412,21 +1427,21 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
                       </p>
                     </div>
                   </div>
-                  
+
                   {requireSharePassword && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} style={{ overflow: 'hidden' }}>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={sharePassword}
                         onChange={(e) => setSharePassword(e.target.value)}
-                        placeholder="Enter a password for this link" 
+                        placeholder="Enter a password for this link"
                         required
                         autoComplete="off"
                         style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #fcd34d', fontSize: '0.875rem', background: 'white', boxSizing: 'border-box' }}
                       />
                     </motion.div>
                   )}
-                  
+
                   {!requireSharePassword && activeFolderPassword && (
                     <p style={{ margin: 0, fontSize: '0.8125rem', color: '#92400e', lineHeight: 1.5 }}>
                       ⚡ <strong>Passwordless mode:</strong> The decryption key is embedded in the link. Anyone with the link can open the file.
@@ -1450,14 +1465,14 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
               <div className="field-group">
                 <label style={{ fontSize: '0.875rem', fontWeight: 700, color: '#475569', marginBottom: '8px', display: 'block' }}>Your Secure Link</label>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <input 
-                    readOnly 
-                    value={shareLink} 
+                  <input
+                    readOnly
+                    value={shareLink}
                     style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid #3b82f6', background: '#eff6ff', fontSize: '0.875rem', fontWeight: 600, color: '#2563eb' }}
                   />
-                  <button 
+                  <button
                     onClick={() => { navigator.clipboard.writeText(shareLink); showToast("success", "Link copied to clipboard"); }}
-                    className="primary-btn" 
+                    className="primary-btn"
                     style={{ width: 'auto', padding: '0 20px' }}
                   >
                     Copy
@@ -1472,17 +1487,17 @@ export function VaultApp({ session, onLogout }: { session: Session; onLogout: ()
       </Modal>
 
       <Modal isOpen={showLogoutModal} onClose={() => setShowLogoutModal(false)} title="Sign Out">
-        <div style={{textAlign: 'center', padding: '10px 0'}}>
-          <div style={{background: 'linear-gradient(135deg, #fef2f2, #fee2e2)', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', color: '#ef4444', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.1)'}}>
+        <div style={{ textAlign: 'center', padding: '10px 0' }}>
+          <div style={{ background: 'linear-gradient(135deg, #fef2f2, #fee2e2)', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', color: '#ef4444', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.1)' }}>
             <AlertCircle size={40} />
           </div>
-          <h3 style={{fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', marginBottom: '12px'}}>End Session?</h3>
-          <p style={{color: '#64748b', fontSize: '1rem', marginBottom: '32px', maxWidth: '280px', margin: '0 auto 32px'}}>Your session keys will be purged from memory.</p>
-          <div style={{display: 'flex', gap: '16px'}}>
-            <button className="secondary-btn" style={{flex: 1}} onClick={() => setShowLogoutModal(false)} disabled={isLoggingOut}>Cancel</button>
-            <button 
-              className="primary-btn" 
-              style={{background: '#ef4444', flex: 1}} 
+          <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', marginBottom: '12px' }}>End Session?</h3>
+          <p style={{ color: '#64748b', fontSize: '1rem', marginBottom: '32px', maxWidth: '280px', margin: '0 auto 32px' }}>Your session keys will be purged from memory.</p>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <button className="secondary-btn" style={{ flex: 1 }} onClick={() => setShowLogoutModal(false)} disabled={isLoggingOut}>Cancel</button>
+            <button
+              className="primary-btn"
+              style={{ background: '#ef4444', flex: 1 }}
               disabled={isLoggingOut}
               onClick={async () => {
                 setIsLoggingOut(true);
